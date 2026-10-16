@@ -84,7 +84,7 @@ export function AssistantChat({ initialLanguage = "en" }: AssistantChatProps) {
     if (!text || isStreaming) return;
 
     setInput("");
-    const userMsgId = `user-${Date.now()}`;
+    const userMsgId = `user-${crypto.randomUUID()}`;
     const userMsg: AssistantMessage = {
       id: userMsgId,
       role: "user",
@@ -97,7 +97,7 @@ export function AssistantChat({ initialLanguage = "en" }: AssistantChatProps) {
     setIsStreaming(true);
     setCurrentToolStatus(null);
 
-    const assistantMsgId = `assistant-${Date.now()}`;
+    const assistantMsgId = `assistant-${crypto.randomUUID()}`;
     let accumulatedText = "";
     let capturedProposal: SlotProposal | null = null;
     let capturedConfirmed: BookingConfirmedData | null = null;

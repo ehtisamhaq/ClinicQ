@@ -47,41 +47,48 @@ export function WalkInForm({ doctors }: WalkInFormProps) {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   // Fetch slots for selected doctor today
-  const fetchTodaySlots = React.useCallback(async (doctorId: string) => {
-    if (!doctorId) return;
-    setIsLoadingSlots(true);
-    setSelectedSlotId("");
-    try {
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!selectedDoctorId) return;
+
+    const fetchSlots = async () => {
+      setIsLoadingSlots(true);
+      setSelectedSlotId("");
+
       const today = new Date().toISOString().split("T")[0];
       const startOfDay = new Date(`${today}T00:00:00.000Z`).toISOString();
       const endOfDay = new Date(`${today}T23:59:59.999Z`).toISOString();
-
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
-      const res = await fetch(
-        `${apiUrl}/slots/doctor/${doctorId}?from=${startOfDay}&to=${endOfDay}`
-      );
-      if (res.ok) {
-        const json = await res.json();
-        const available = (json.data || []).filter((s: SlotItem) => s.status === "AVAILABLE");
-        setSlots(available);
-        if (available[0]) {
-          setSelectedSlotId(available[0].id);
-        }
-      } else {
-        setSlots([]);
-      }
-    } catch {
-      setSlots([]);
-    } finally {
-      setIsLoadingSlots(false);
-    }
-  }, []);
 
-  React.useEffect(() => {
-    if (selectedDoctorId) {
-      fetchTodaySlots(selectedDoctorId);
-    }
-  }, [selectedDoctorId, fetchTodaySlots]);
+      try {
+        const res = await fetch(
+          `${apiUrl}/slots/doctor/${selectedDoctorId}?from=${startOfDay}&to=${endOfDay}`
+        );
+        if (!cancelled && res.ok) {
+          const json = await res.json();
+          const available = ((json?.data as SlotItem[]) || []).filter(
+            (s) => s.status === "AVAILABLE"
+          );
+          setSlots(available);
+          if (available[0]) {
+            setSelectedSlotId(available[0].id);
+          }
+        }
+      } catch {
+        if (!cancelled) setSlots([]);
+      } finally {
+        if (!cancelled) setIsLoadingSlots(false);
+      }
+    };
+
+    queueMicrotask(() => {
+      fetchSlots();
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDoctorId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

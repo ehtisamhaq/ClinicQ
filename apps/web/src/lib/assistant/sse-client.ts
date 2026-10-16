@@ -66,9 +66,15 @@ export async function* streamAssistantConversation(
         if (rawData) {
           try {
             const parsed = JSON.parse(rawData);
-            yield { event: eventType as any, data: parsed };
+            yield {
+              event: eventType as AssistantStreamEvent["event"],
+              data: parsed,
+            } as AssistantStreamEvent;
           } catch {
-            yield { event: eventType as any, data: { text: rawData } };
+            yield {
+              event: "text",
+              data: { text: rawData },
+            };
           }
         }
       }
