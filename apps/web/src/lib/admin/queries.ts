@@ -4,7 +4,7 @@ import type {
   KnowledgeDocument,
   DoctorScheduleItem,
 } from "./types";
-import type { DoctorCatalogItem } from "@/lib/catalog/queries";
+import { type DoctorCatalogItem, formatDoctorCatalogItem } from "@/lib/catalog/queries";
 
 /**
  * Fetch operational dashboard metrics for clinic administrators
@@ -31,11 +31,11 @@ export async function getAdminDashboardMetrics(
  */
 export async function getAdminDoctors(): Promise<DoctorCatalogItem[]> {
   try {
-    const res = await apiClient.get<DoctorCatalogItem[]>("/doctors", {
+    const res = await apiClient.get<any[]>("/doctors", {
       auth: "session",
       query: { limit: 100 },
     });
-    return res.data || [];
+    return (res.data || []).map(formatDoctorCatalogItem);
   } catch (err) {
     console.error("Failed to load clinic doctors:", err);
     return [];

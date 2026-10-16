@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
-import { proxy, config } from "./proxy";
+import { proxy } from "./proxy";
 
 export function middleware(request: NextRequest) {
   return proxy(request);
 }
 
-export { config };
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.svg$).*)"],
+};

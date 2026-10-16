@@ -57,8 +57,8 @@ export function DoctorsTable({ doctors }: DoctorsTableProps) {
     const q = search.toLowerCase();
     return doctors.filter(
       (d) =>
-        d.name.toLowerCase().includes(q) ||
-        d.specialty.toLowerCase().includes(q) ||
+        (d.name || "").toLowerCase().includes(q) ||
+        (d.specialty || "").toLowerCase().includes(q) ||
         (d.languages && d.languages.some((l) => l.toLowerCase().includes(q)))
     );
   }, [doctors, search]);
@@ -150,7 +150,7 @@ export function DoctorsTable({ doctors }: DoctorsTableProps) {
                         </div>
                         <div>
                           <div className="font-semibold text-xs text-foreground">
-                            Dr. {doc.name}
+                            {doc.name?.startsWith("Dr.") ? doc.name : `Dr. ${doc.name || "Doctor"}`}
                           </div>
                           <div className="text-[11px] text-muted-foreground">
                             ID: {doc.id.slice(0, 8)}...

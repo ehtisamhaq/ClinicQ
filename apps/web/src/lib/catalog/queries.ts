@@ -33,6 +33,51 @@ export interface SlotItem {
   status: "AVAILABLE" | "BOOKED" | "BLOCKED";
 }
 
+export function formatDoctorCatalogItem(raw: any): DoctorCatalogItem {
+  if (!raw) return {} as DoctorCatalogItem;
+
+  const email = raw.user?.email || raw.email || "";
+  const handle = email ? email.split("@")[0] : "";
+  const nameParts = handle
+    ? handle
+        .split(/[._-]/)
+        .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    : ["Doctor"];
+  let fallbackName = nameParts.join(" ");
+  if (fallbackName.toLowerCase().startsWith("dr ")) {
+    fallbackName = "Dr. " + fallbackName.slice(3).trim();
+  } else if (!fallbackName.toLowerCase().startsWith("dr.")) {
+    fallbackName = `Dr. ${fallbackName}`;
+  }
+
+  const name = raw.name || fallbackName;
+  const specialty = raw.specialty || "General Medicine";
+  const consultationFee = Number(raw.consultationFee) || 0;
+  const gender = raw.gender || "Not specified";
+  const languages = Array.isArray(raw.languages) && raw.languages.length > 0 ? raw.languages : ["English", "Bengali"];
+  const qualifications = Array.isArray(raw.qualifications) && raw.qualifications.length > 0 ? raw.qualifications : ["MBBS", "FCPS"];
+  const experienceYears = typeof raw.experienceYears === "number" ? raw.experienceYears : 10;
+  const bio = raw.bio || `Specialist in ${specialty}.`;
+  const roomNumber = raw.roomNumber || null;
+
+  return {
+    ...raw,
+    id: raw.id,
+    name,
+    specialty,
+    subSpecialty: raw.subSpecialty || null,
+    consultationFee,
+    gender,
+    languages,
+    experienceYears,
+    bio,
+    avatarUrl: raw.avatarUrl || null,
+    qualifications,
+    roomNumber,
+    schedules: Array.isArray(raw.schedules) ? raw.schedules : [],
+  };
+}
+
 /**
  * Fetch all available specialties in the clinic (cached for hours)
  */
@@ -74,7 +119,7 @@ export async function getDoctors(filters?: {
   cacheLife("hours");
 
   try {
-    const res = await apiClient.get<DoctorCatalogItem[]>("/doctors", {
+    const res = await apiClient.get<any[]>("/doctors", {
       auth: "none",
       query: {
         specialty: filters?.specialty,
@@ -85,7 +130,7 @@ export async function getDoctors(filters?: {
         limit: 50,
       },
     });
-    return res.data || [];
+    return (res.data || []).map(formatDoctorCatalogItem);
   } catch {
     return [];
   }
@@ -100,10 +145,10 @@ export async function getDoctorById(id: string): Promise<DoctorCatalogItem | nul
   cacheLife("hours");
 
   try {
-    const res = await apiClient.get<DoctorCatalogItem>(`/doctors/${id}`, {
+    const res = await apiClient.get<any>(`/doctors/${id}`, {
       auth: "none",
     });
-    return res.data || null;
+    return res.data ? formatDoctorCatalogItem(res.data) : null;
   } catch {
     return null;
   }

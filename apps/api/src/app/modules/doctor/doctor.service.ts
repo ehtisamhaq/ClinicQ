@@ -8,6 +8,28 @@ import type {
   UpdateScheduleInput,
 } from "./doctor.validation";
 
+export function formatDoctorProfile<T extends { user?: { email?: string } | null; consultationFee: any }>(doc: T) {
+  const email = doc.user?.email || "";
+  const handle = email ? email.split("@")[0] : "";
+  const nameParts = handle
+    ? handle
+        .split(/[._-]/)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    : ["Doctor"];
+  let name = nameParts.join(" ");
+  if (name.toLowerCase().startsWith("dr ")) {
+    name = "Dr. " + name.slice(3).trim();
+  } else if (!name.toLowerCase().startsWith("dr.")) {
+    name = `Dr. ${name}`;
+  }
+
+  return {
+    ...doc,
+    name,
+    consultationFee: Number(doc.consultationFee),
+  };
+}
+
 export class DoctorService {
   static async getDoctors(clinicId?: string, query: DoctorQuery = { page: 1, limit: 20 }) {
     const { specialty, gender, language, minFee, maxFee, search, page = 1, limit = 20 } = query;
@@ -68,8 +90,10 @@ export class DoctorService {
       }),
     ]);
 
+    const mappedDoctors = doctors.map(formatDoctorProfile);
+
     return {
-      doctors,
+      doctors: mappedDoctors,
       meta: {
         page,
         limit,
@@ -119,7 +143,7 @@ export class DoctorService {
       throw new AppError(404, "Doctor not found in this clinic");
     }
 
-    return doctor;
+    return formatDoctorProfile(doctor);
   }
 
   static async createDoctor(data: CreateDoctorInput, clinicId: string) {

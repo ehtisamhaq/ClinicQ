@@ -186,11 +186,14 @@ export function SchedulesManager({
                 onChange={(e) => handleDoctorChange(e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 pl-9 text-xs shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                {doctors.map((doc) => (
-                  <option key={doc.id} value={doc.id} className="bg-background text-foreground">
-                    Dr. {doc.name} — {doc.specialty}
-                  </option>
-                ))}
+                {doctors.map((doc) => {
+                  const docName = doc.name?.startsWith("Dr.") ? doc.name : `Dr. ${doc.name || "Doctor"}`;
+                  return (
+                    <option key={doc.id} value={doc.id} className="bg-background text-foreground">
+                      {docName} — {doc.specialty}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>

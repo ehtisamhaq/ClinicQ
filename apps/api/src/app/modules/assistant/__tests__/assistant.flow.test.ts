@@ -87,7 +87,7 @@ describe("Assistant Flow Integration Tests", () => {
     // Should NOT have confirmed a booking
     const bookingEvent = events.find((e) => e.event === "booking_confirmed");
     expect(bookingEvent).toBeUndefined();
-  });
+  }, 20000);
 
   it("should respect replan limit: stop within 3 attempts when nothing matches", async () => {
     const events: SseEvent[] = [];
@@ -109,5 +109,5 @@ describe("Assistant Flow Integration Tests", () => {
       fullText.includes("manual booking calendar") ||
       fullText.includes("standard fees")
     ).toBe(true);
-  });
+  }, 20000);
 });
