@@ -16,9 +16,11 @@ import {
   IconBook,
   IconTimeline,
   IconLogin,
+  IconLogout,
   IconUser,
   IconChevronRight,
 } from "@tabler/icons-react";
+import { logoutAction } from "@/lib/auth/actions";
 import {
   Sidebar,
   SidebarContent,
@@ -224,28 +226,41 @@ export function AppShell({ children, user }: AppShellProps) {
           </SidebarContent>
 
           <SidebarFooter className="border-t border-border/50 p-3">
-            <div className="flex items-center justify-between gap-2">
               {user ? (
-                <div className="flex items-center gap-2 truncate text-xs">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                    <IconUser className="h-3.5 w-3.5" />
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div className="flex items-center gap-2 truncate text-xs">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                      <IconUser className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="flex flex-col truncate">
+                      <span className="font-medium truncate">{user.name}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase">{user.role}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col truncate">
-                    <span className="font-medium truncate">{user.name}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase">{user.role}</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <ThemeToggle />
+                    <button
+                      onClick={() => logoutAction()}
+                      title="Sign Out"
+                      className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <IconLogout className="h-4 w-4" />
+                      <span className="sr-only">Sign out</span>
+                    </button>
                   </div>
                 </div>
               ) : (
-                <Link
-                  href="/login"
-                  className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground"
-                >
-                  <IconLogin className="h-4 w-4" />
-                  <span>Staff / Sign In</span>
-                </Link>
+                <div className="flex items-center justify-between w-full gap-2">
+                  <Link
+                    href="/login"
+                    className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    <IconLogin className="h-4 w-4" />
+                    <span>Staff / Sign In</span>
+                  </Link>
+                  <ThemeToggle />
+                </div>
               )}
-              <ThemeToggle />
-            </div>
           </SidebarFooter>
         </Sidebar>
 
