@@ -88,4 +88,5 @@ export interface SessionUser {
   role: UserRole;
   clinicId: string;
   phone?: string | null;
+  preferredLanguage?: string | null;
 }
