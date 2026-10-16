@@ -1,8 +1,11 @@
 import type { Request, Response } from "express";
+import prisma from "../../../lib/prisma";
+import { AppError } from "../../errors/AppError";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { DoctorService } from "../doctor/doctor.service";
 import { SlotService } from "../slot/slot.service";
+import { AppointmentStatus } from "../../../generated/prisma/client";
 
 export class PublicController {
   static getClinicDoctors = catchAsync(async (req: Request, res: Response) => {
@@ -66,6 +69,79 @@ export class PublicController {
       success: true,
       message: "Available slots retrieved successfully",
       data: slots,
+    });
+  });
+
+  static trackAppointment = catchAsync(async (req: Request, res: Response) => {
+    const token = req.params.token as string;
+    const appointment = await prisma.appointment.findUnique({
+      where: { trackingToken: token },
+      include: {
+        slot: {
+          include: {
+            doctor: {
+              include: {
+                user: { select: { email: true } },
+              },
+            },
+          },
+        },
+        patient: {
+          include: {
+            user: { select: { email: true } },
+          },
+        },
+      },
+    });
+
+    if (!appointment) {
+      throw new AppError(404, "Invalid or expired tracking link");
+    }
+
+    let aheadCount = 0;
+    if (appointment.status === AppointmentStatus.CHECKED_IN && appointment.checkedInAt) {
+      aheadCount = await prisma.appointment.count({
+        where: {
+          slot: { doctorId: appointment.slot.doctorId },
+          status: AppointmentStatus.CHECKED_IN,
+          checkedInAt: { lt: appointment.checkedInAt },
+        },
+      });
+    }
+
+    const emailPrefix = appointment.patient.user.email.split("@")[0] || "";
+    const initials =
+      emailPrefix
+        .split(/[._-]/)
+        .filter(Boolean)
+        .map((part) => part[0]?.toUpperCase())
+        .join(".") + ".";
+
+    const waitMinutes = aheadCount * (appointment.slot.doctor.avgConsultMinutes || 15);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Queue tracking details retrieved",
+      data: {
+        status: appointment.status,
+        queuePosition: appointment.status === AppointmentStatus.CHECKED_IN ? aheadCount + 1 : null,
+        patientsAhead: aheadCount,
+        estimatedWaitMinutes: waitMinutes,
+        doctor: {
+          specialty: appointment.slot.doctor.specialty,
+          consultationFee: appointment.slot.doctor.consultationFee,
+          email: appointment.slot.doctor.user.email,
+        },
+        slot: {
+          startsAt: appointment.slot.startsAt,
+          endsAt: appointment.slot.endsAt,
+        },
+        patientInitials: initials,
+        checkedInAt: appointment.checkedInAt,
+        consultStartedAt: appointment.consultStartedAt,
+        completedAt: appointment.completedAt,
+      },
     });
   });
 }

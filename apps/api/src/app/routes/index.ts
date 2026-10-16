@@ -5,6 +5,8 @@ import { doctorRouter } from "../modules/doctor/doctor.route";
 import { slotRouter } from "../modules/slot/slot.route";
 import { publicRouter } from "../modules/public/public.route";
 
+import { appointmentRouter } from "../modules/appointment/appointment.route";
+
 const router: IRouter = Router();
 
 // Health check
@@ -18,6 +20,9 @@ router.use("/doctors", doctorRouter);
 
 // Slot module
 router.use("/slots", slotRouter);
+
+// Appointment module
+router.use("/appointments", appointmentRouter);
 
 // Public browsing endpoints
 router.use("/public", publicRouter);
