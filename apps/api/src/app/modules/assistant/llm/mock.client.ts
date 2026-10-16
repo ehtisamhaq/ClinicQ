@@ -41,6 +41,13 @@ export class MockLlmClient implements LlmClient {
       lower.includes("severe bleeding") ||
       lower.includes("stroke") ||
       lower.includes("unconscious") ||
+      lower.includes("slurred speech") ||
+      lower.includes("facial droop") ||
+      lower.includes("drooping") ||
+      lower.includes("cannot lift") ||
+      lower.includes("paralysis") ||
+      lower.includes("convulsion") ||
+      lower.includes("seizure") ||
       lower.includes("বুক ব্যথা") ||
       lower.includes("শ্বাসকষ্ট");
 
@@ -62,9 +69,39 @@ export class MockLlmClient implements LlmClient {
       lower.includes("infant") ||
       lower.includes("kid") ||
       lower.includes("vaccin") ||
+      lower.includes("bacha") ||
+      lower.includes("baccha") ||
+      lower.includes("shishu") ||
       lower.includes("বাচ্চা")
     ) {
       specialty = "Pediatrics";
+      urgency = UrgencyLevel.ROUTINE;
+    } else if (
+      lower.includes("skin") ||
+      lower.includes("rash") ||
+      lower.includes("itch") ||
+      lower.includes("ত্বক")
+    ) {
+      specialty = "Dermatology";
+      urgency = UrgencyLevel.ROUTINE;
+    } else if (
+      lower.includes("bone") ||
+      lower.includes("joint") ||
+      lower.includes("fracture") ||
+      lower.includes("knee") ||
+      lower.includes("হাড়")
+    ) {
+      specialty = "Orthopedics";
+      urgency = UrgencyLevel.ROUTINE;
+    } else if (lower.includes("neuro")) {
+      specialty = "Pediatric Neurology";
+      urgency = UrgencyLevel.SOON;
+    } else if (
+      lower.includes("stomach") ||
+      lower.includes("belly") ||
+      lower.includes("gastric")
+    ) {
+      specialty = "Gastroenterology";
       urgency = UrgencyLevel.ROUTINE;
     }
 

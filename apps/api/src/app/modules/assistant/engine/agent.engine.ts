@@ -68,10 +68,13 @@ export class AgentEngine {
       }
 
       // ─── Side Flow: General Clinic Info (RAG) Check ───────────────────────
-      const isInfoQuery = /(fee|cost|charge|timing|hour|open|location|address|where|policy|cancel|ভাড়া|খরচ|সময়|কোথায়)/i.test(
+      const isInfoQuery = /\b(fees?|costs?|charges?|timings?|hours?|opening|location|address|where|policy)\b|ভাড়া|খরচ|সময়|কোথায়/i.test(
         lastUserMessage,
       );
-      if (isInfoQuery && !/(book|appointment|schedule|doctor|ডাক্তার)/i.test(lastUserMessage)) {
+      if (
+        isInfoQuery &&
+        !/\b(book|appointment|schedule|doctor|specialist|consult|visit|see|need|want)\b|ডাক্তার/i.test(lastUserMessage)
+      ) {
         this.addStep({ node: "answerInfo", timestamp: new Date().toISOString() });
         const info = await AssistantTools.searchClinicInfo({ query: lastUserMessage }, this.context);
         let infoText = "";
@@ -326,6 +329,13 @@ export class AgentEngine {
       "severe bleeding",
       "unconscious",
       "poisoning",
+      "slurred speech",
+      "facial droop",
+      "drooping",
+      "cannot lift",
+      "paralysis",
+      "convulsion",
+      "seizure",
       "বুক ব্যথা",
       "শ্বাসকষ্ট",
       "প্রচুর রক্তপাত",
