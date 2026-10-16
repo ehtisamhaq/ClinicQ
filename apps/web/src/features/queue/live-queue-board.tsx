@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getApiUrl } from "@/lib/config";
 import {
   IconStethoscope,
   IconClock,
@@ -58,8 +59,7 @@ export function LiveQueueBoard({
   const fetchDoctorDetails = React.useCallback(async (docId: string) => {
     if (!docId) return;
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
-      const res = await fetch(`${apiUrl}/queue/doctor/${docId}`, { cache: "no-store" });
+      const res = await fetch(getApiUrl(`/queue/doctor/${docId}`), { cache: "no-store" });
       if (res.ok) {
         const json = await res.json();
         setDetails(json.data || null);
@@ -72,8 +72,7 @@ export function LiveQueueBoard({
   // Refresh summaries and details on socket update or periodic poll
   const handleLiveRefresh = React.useCallback(async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
-      const res = await fetch(`${apiUrl}/queue/clinic`, { cache: "no-store" });
+      const res = await fetch(getApiUrl("/queue/clinic"), { cache: "no-store" });
       if (res.ok) {
         const json = await res.json();
         if (json.data) setSummaries(json.data);

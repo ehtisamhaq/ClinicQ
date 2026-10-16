@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { getApiUrl } from "@/lib/config";
 import {
   IconClock,
   IconCheck,
@@ -107,9 +108,8 @@ export function BookingWizard({
 
       if (!res || !res.ok) {
         // Fallback directly to backend URL if relative route fails
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
         const fallbackRes = await fetch(
-          `${apiUrl}/slots/doctor/${doctorId}?from=${startOfDay}&to=${endOfDay}`
+          getApiUrl(`/slots/doctor/${doctorId}?from=${startOfDay}&to=${endOfDay}`)
         );
         const json = await fallbackRes.json();
         const available = (json.data || []).filter((s: SlotItem) => s.status === "AVAILABLE");

@@ -58,7 +58,8 @@ app.use(
   }),
 );
 
-// Routes — mount under /api and also / as fallback
+// Routes — mount under /api/v1, /api, and / as fallback
+app.use("/api/v1", rootRouter);
 app.use("/api", rootRouter);
 app.use("/", rootRouter);
 

@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getApiUrl } from "@/lib/config";
 import {
   IconWalk,
   IconStethoscope,
@@ -58,11 +59,9 @@ export function WalkInForm({ doctors }: WalkInFormProps) {
       const today = new Date().toISOString().split("T")[0];
       const startOfDay = new Date(`${today}T00:00:00.000Z`).toISOString();
       const endOfDay = new Date(`${today}T23:59:59.999Z`).toISOString();
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
-
       try {
         const res = await fetch(
-          `${apiUrl}/slots/doctor/${selectedDoctorId}?from=${startOfDay}&to=${endOfDay}`
+          getApiUrl(`/slots/doctor/${selectedDoctorId}?from=${startOfDay}&to=${endOfDay}`)
         );
         if (!cancelled && res.ok) {
           const json = await res.json();

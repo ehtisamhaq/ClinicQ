@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { getApiUrl } from "@/lib/config";
 import {
   IconCalendar,
   IconClock,
@@ -117,9 +118,8 @@ export function AppointmentsTable({ appointments }: AppointmentsTableProps) {
         const startOfDay = new Date(`${date}T00:00:00.000Z`).toISOString();
         const endOfDay = new Date(`${date}T23:59:59.999Z`).toISOString();
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
         const res = await fetch(
-          `${apiUrl}/slots/doctor/${doctorId}?from=${startOfDay}&to=${endOfDay}`
+          getApiUrl(`/slots/doctor/${doctorId}?from=${startOfDay}&to=${endOfDay}`)
         );
         if (res.ok) {
           const json = await res.json();

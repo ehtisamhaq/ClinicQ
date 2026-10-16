@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { getApiUrl } from "@/lib/config";
 import type { SessionUser } from "@/lib/api/types";
 
 export const ACCESS_TOKEN_COOKIE =
@@ -88,10 +89,8 @@ export async function refreshServerSession(): Promise<string | null> {
     return null;
   }
 
-  const apiUrl = process.env.API_URL || "http://localhost:5001/api/v1";
-
-  try {
-    const res = await fetch(`${apiUrl}/auth/refresh`, {
+    try {
+      const res = await fetch(getApiUrl("/auth/refresh"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),

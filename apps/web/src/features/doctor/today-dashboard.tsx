@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { getApiUrl } from "@/lib/config";
 import {
   IconStethoscope,
   IconClock,
@@ -53,14 +54,14 @@ export function TodayDashboard({
   // Re-fetch function on socket update or manual click
   const handleLiveRefresh = React.useCallback(async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
-
       const [aptRes, qRes] = await Promise.all([
         fetch(
-          `${apiUrl}/appointments?doctorId=${doctor.id}&from=${new Date().toISOString().split("T")[0]}T00:00:00.000Z&limit=100`,
+          getApiUrl(
+            `/appointments?doctorId=${doctor.id}&from=${new Date().toISOString().split("T")[0]}T00:00:00.000Z&limit=100`
+          ),
           { cache: "no-store" }
         ).catch(() => null),
-        fetch(`${apiUrl}/queue/doctor/${doctor.id}`, { cache: "no-store" }).catch(() => null),
+        fetch(getApiUrl(`/queue/doctor/${doctor.id}`), { cache: "no-store" }).catch(() => null),
       ]);
 
       if (aptRes?.ok) {

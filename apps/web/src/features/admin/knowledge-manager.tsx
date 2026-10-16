@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { getApiUrl } from "@/lib/config";
 import {
   IconBook,
   IconPlus,
@@ -150,8 +151,7 @@ export function KnowledgeManager({ initialDocs }: KnowledgeManagerProps) {
 
     setIsSearchingVector(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
-      const res = await fetch(`${apiUrl}/knowledge/search`, {
+      const res = await fetch(getApiUrl("/knowledge/search"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: searchTestQuery }),

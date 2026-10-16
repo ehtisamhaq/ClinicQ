@@ -1,13 +1,9 @@
 import { ApiError, type ApiEnvelope, type ApiResult, type RequestOptions } from "./types";
 
-const IS_SERVER = typeof window === "undefined";
+import { getApiBaseUrl } from "@/lib/config";
+export { getApiBaseUrl };
 
-export function getApiBaseUrl(): string {
-  if (IS_SERVER) {
-    return process.env.API_URL || "http://localhost:5001/api/v1";
-  }
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
-}
+const IS_SERVER = typeof window === "undefined";
 
 function buildUrl(
   path: string,

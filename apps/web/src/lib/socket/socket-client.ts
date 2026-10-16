@@ -1,4 +1,5 @@
 import { io, type Socket } from "socket.io-client";
+import { getSocketUrl } from "@/lib/config";
 
 export type SocketConnectionState =
   | "connected"
@@ -95,10 +96,7 @@ class SocketClientManager {
       return null;
     }
 
-    const socketUrl =
-      process.env.NEXT_PUBLIC_SOCKET_URL ||
-      process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, "") ||
-      "http://localhost:5001";
+    const socketUrl = getSocketUrl();
 
     this.socket = io(socketUrl, {
       auth: { token },

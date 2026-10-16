@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getApiUrl } from "@/lib/config";
 import {
   IconCalendar,
   IconClock,
@@ -73,8 +74,7 @@ export function SchedulesManager({
     setIsLoadingSchedules(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
-      const res = await fetch(`${apiUrl}/doctors/${docId}/schedules`, { cache: "no-store" });
+      const res = await fetch(getApiUrl(`/doctors/${docId}/schedules`), { cache: "no-store" });
       if (res.ok) {
         const json = await res.json();
         const items: DoctorScheduleItem[] = json.data || [];
