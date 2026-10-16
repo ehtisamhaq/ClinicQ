@@ -253,6 +253,29 @@ Simultaneous concurrent booking requests result in exactly one successful bookin
 
 ## 10. Local Development Setup
 
+### Monorepo Structure
+
+- **`apps/api`**: Backend service built with Bun, Express 5, Prisma ORM, PostgreSQL with `pgvector`, Socket.IO, and Argon2 auth.
+- **`apps/web`**: Frontend application built with Next.js 16 (App Router, Turbopack, Partial Prerendering `ppr: true`, Cache Components), Base UI (`@base-ui/react`), Tailwind CSS v4 (`sera` design preset with `taupe` palette), and Tabler Icons (`@tabler/icons-react`).
+
+### Frontend Route Map
+
+| Audience | Route | Description | Rendering |
+|---|---|---|---|
+| **Public / Any** | `/` | Clinic landing page with specialty overview, live doctor availability & 1-click role logins | Static Shell |
+| **Public** | `/track/:token` | Unauthenticated live queue tracker with turn counter, wait countdown & status stepper | Partial Prerendering (`◐`) |
+| **Patient** | `/assistant` | AI streaming appointment assistant with constraint clarification, proposals & emergency triage | Server Component (`◐`) |
+| **Patient** | `/book` | 3-step manual booking wizard with cached specialty/doctor catalog & calendar slot selector | Partial Prerendering (`◐`) |
+| **Patient** | `/appointments` | Interactive appointments table with live status badges, cancel & reschedule modals | Partial Prerendering (`◐`) |
+| **Receptionist** | `/queue` | Multi-doctor live queue board with Socket.IO realtime sync, check-in & no-show management | Partial Prerendering (`◐`) |
+| **Receptionist** | `/walk-in` | Walk-in patient search/registration and instant on-behalf slot booking | Partial Prerendering (`◐`) |
+| **Doctor** | `/today` | Doctor workspace with active room timer, urgency sorting, assistant summary & transitions | Partial Prerendering (`◐`) |
+| **Admin** | `/dashboard` | Operational metrics dashboard with 7-day appointment trend charts & doctor utilization | Partial Prerendering (`◐`) |
+| **Admin** | `/doctors` | Doctor directory management and profile editing | Partial Prerendering (`◐`) |
+| **Admin** | `/schedules` | Interactive 7-day weekly timetable & slot duration editor | Partial Prerendering (`◐`) |
+| **Admin** | `/knowledge` | Clinic RAG knowledge base CRUD with real-time vector search tester | Partial Prerendering (`◐`) |
+| **Admin** | `/agent-traces` | Explainable AI audit inspector with node-by-node execution pipeline and tool arguments | Partial Prerendering (`◐`) |
+
 ### Prerequisites
 - [Bun](https://bun.sh) (v1.2+)
 - [Docker](https://docker.com) (for local PostgreSQL 16 + pgvector)
@@ -280,29 +303,35 @@ Simultaneous concurrent booking requests result in exactly one successful bookin
    cd apps/api
    bunx prisma db push
    bun run db:seed
+   cd ../..
    ```
 
 5. **Run Test Suites & Evaluations:**
    ```bash
-   # Run all 86 unit and integration tests
-   bun test
+   # Run all 132 unit and integration tests across web and API
+   bun run test
 
    # Run 26-scenario Assistant Evaluation Suite
-   bun run eval:assistant
+   cd apps/api && bun run eval:assistant && cd ../..
    ```
 
-6. **Start Development Server:**
+6. **Start Development Servers:**
    ```bash
-   # From root:
-   bun run dev:api
+   # Start both Web and API concurrently from root:
+   bun run dev
+
+   # Or run individually:
+   bun run dev:api    # API on http://localhost:5001
+   bun run dev:web    # Web on http://localhost:3000
    ```
-   API will be live at `http://localhost:4000`, with health check at `http://localhost:4000/health`.
+   - Web application will be live at `http://localhost:3000`.
+   - Backend API will be live at `http://localhost:5001/api/v1` (with health check at `http://localhost:5001/health`).
 
 ---
 
 ## 11. Deployment Configuration
 
-- **Web Frontend:** Deploy to [Vercel](https://vercel.com) (root directory: `apps/web`).
+- **Web Frontend:** Deploy to [Vercel](https://vercel.com) (root directory: `apps/web`, Bun package manager, environment variable `NEXT_PUBLIC_API_URL` pointing to backend).
 - **Backend API:** Deploy to [Render](https://render.com) or [Railway](https://railway.app) using the provided `apps/api/Dockerfile` (supports persistent WebSocket connections).
 - **Database:** Deploy on [Neon](https://neon.tech) (PostgreSQL 16 with native `pgvector` extension support).
 
