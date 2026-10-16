@@ -164,10 +164,11 @@ Output JSON matching schema:
       // ─── Step 8 & 9 Check: Is this a confirmation to book? ────────────────
       const isConfirmation =
         structuredIntake.isConfirmed ||
-        /^(yes|confirm|book|agree|sure|1|first|হ্যাঁ|হা)/i.test(lastUserMessage.trim());
+        /^(yes|confirm|book|agree|sure|1|first|হ্যাঁ|হা)/i.test(lastUserMessage.trim()) ||
+        /\b(book this slot|yes, book|confirm this|book it|yes book)\b/i.test(lastUserMessage.trim());
 
       // Look for a proposed slot in previous assistant messages
-      const previousProposal = this.findRecentProposal();
+      const previousProposal = await this.findRecentProposal();
 
       if (isConfirmation && previousProposal) {
         // Step 9: ACT (Book Appointment)
@@ -348,7 +349,7 @@ Output JSON matching schema:
 
       proposals.forEach((p, idx) => {
         const formattedTime = new Date(p.startsAt).toLocaleString();
-        proposalText += `\n**Option ${idx + 1}**: Dr. ${p.doctorName} (${p.specialty})\n📅 ${formattedTime}\n💵 Fee: ৳${p.fee}\n`;
+        proposalText += `\n**Option ${idx + 1}**: Dr. ${p.doctorName} (${p.specialty})\n📅 ${formattedTime}\n💵 Fee: ৳${p.fee}\n<!-- slot:${p.slotId} -->\n`;
       });
       proposalText += `\nPlease reply **"Yes"** or **"Book"** to confirm this slot.`;
 
@@ -399,22 +400,63 @@ Output JSON matching schema:
     return isHit;
   }
 
-  private findRecentProposal(): SlotProposal | null {
+  private async findRecentProposal(): Promise<SlotProposal | null> {
     for (let i = this.messages.length - 1; i >= 0; i--) {
       const msg = this.messages[i];
-      if (msg && msg.role === "assistant" && msg.content.includes("Option 1")) {
-        const match = msg.content.match(/Dr\.\s+([^\n]+)/);
-        if (match) {
-          // If we had a proposal, extract context
-          return {
-            slotId: "recent-proposed-slot",
-            doctorId: "doc-id",
-            doctorName: match[1] || "Doctor",
-            specialty: "General Medicine",
-            fee: 800,
-            startsAt: new Date().toISOString(),
-            endsAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-          };
+      if (msg && msg.role === "assistant") {
+        // 1. Look for embedded slot metadata tag
+        const slotMatch = msg.content.match(/<!--\s*slot:([a-zA-Z0-9_-]+)\s*-->/);
+        if (slotMatch && slotMatch[1]) {
+          const slot = await prisma.slot.findUnique({
+            where: { id: slotMatch[1] },
+            include: { doctor: { include: { user: true } } },
+          });
+          if (slot) {
+            return {
+              slotId: slot.id,
+              doctorId: slot.doctorId,
+              doctorName: slot.doctor.user.email.split("@")[0] || "Doctor",
+              specialty: slot.doctor.specialty,
+              fee: Number(slot.doctor.consultationFee),
+              startsAt: slot.startsAt.toISOString(),
+              endsAt: slot.endsAt.toISOString(),
+            };
+          }
+        }
+
+        // 2. Fallback: match Option 1 and doctor name from message
+        if (msg.content.includes("Option 1") || msg.content.includes("Dr.")) {
+          const match = msg.content.match(/Dr\.\s+([a-zA-Z0-9_.-]+)/i);
+          if (match && match[1]) {
+            const rawName = match[1].replace(/[\(\),]/g, "").trim().toLowerCase();
+            const doctor = await prisma.doctorProfile.findFirst({
+              where: {
+                clinicId: this.context.clinicId,
+                user: { email: { contains: rawName } },
+              },
+            });
+            if (doctor) {
+              const availableSlot = await prisma.slot.findFirst({
+                where: {
+                  doctorId: doctor.id,
+                  status: "AVAILABLE",
+                  startsAt: { gte: new Date() },
+                },
+                orderBy: { startsAt: "asc" },
+              });
+              if (availableSlot) {
+                return {
+                  slotId: availableSlot.id,
+                  doctorId: doctor.id,
+                  doctorName: match[1],
+                  specialty: doctor.specialty,
+                  fee: Number(doctor.consultationFee),
+                  startsAt: availableSlot.startsAt.toISOString(),
+                  endsAt: availableSlot.endsAt.toISOString(),
+                };
+              }
+            }
+          }
         }
       }
     }

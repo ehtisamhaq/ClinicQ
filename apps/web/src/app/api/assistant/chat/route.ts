@@ -1,9 +1,40 @@
 import { NextResponse } from "next/server";
-import { getAccessToken } from "@/lib/auth/session";
-import { getApiBaseUrl } from "@/lib/api/client";
+import { getAccessToken, refreshServerSession, setSession } from "@/lib/auth/session";
+import { getApiBaseUrl, getApiUrl } from "@/lib/config";
 
 export async function POST(req: Request) {
-  const token = await getAccessToken();
+  let token = await getAccessToken();
+
+  if (!token) {
+    token = await refreshServerSession();
+  }
+
+  // If still no token, auto-authenticate with demo patient so guests can test the assistant seamlessly
+  if (!token) {
+    try {
+      const loginRes = await fetch(getApiUrl("/auth/login"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "patient.tanvir@clinicq.local",
+          password: "Password123!",
+        }),
+      });
+      if (loginRes.ok) {
+        const loginJson = await loginRes.json();
+        const newAccess = loginJson.data?.accessToken;
+        const newRefresh = loginJson.data?.refreshToken;
+        const user = loginJson.data?.user;
+        if (newAccess && newRefresh && user) {
+          await setSession(newAccess, newRefresh, user);
+          token = newAccess;
+        }
+      }
+    } catch (err) {
+      console.warn("Auto-login fallback error:", err);
+    }
+  }
+
   if (!token) {
     return NextResponse.json(
       { success: false, message: "Please sign in to chat with the booking assistant." },

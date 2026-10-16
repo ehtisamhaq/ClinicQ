@@ -18,10 +18,22 @@ export function validateRequest(schemas: ValidateTargets) {
         req.body = schemas.body.parse(req.body);
       }
       if (schemas.query) {
-        req.query = schemas.query.parse(req.query) as typeof req.query;
+        const parsedQuery = schemas.query.parse(req.query);
+        Object.defineProperty(req, "query", {
+          value: parsedQuery,
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        });
       }
       if (schemas.params) {
-        req.params = schemas.params.parse(req.params) as typeof req.params;
+        const parsedParams = schemas.params.parse(req.params);
+        Object.defineProperty(req, "params", {
+          value: parsedParams,
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        });
       }
       next();
     } catch (err) {
