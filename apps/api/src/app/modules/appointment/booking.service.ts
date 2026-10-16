@@ -8,6 +8,7 @@ import {
   SlotStatus,
   UrgencyLevel,
 } from "../../../generated/prisma/client";
+import { emitQueueUpdated, emitSlotBooked } from "../../../socket";
 
 export interface BookingActor {
   id: string;
@@ -179,6 +180,10 @@ export class BookingService {
 
       return newAppointment;
     });
+
+    // Realtime notification after DB write succeeds
+    emitSlotBooked(appointment.slot.doctorId, actor.clinicId, appointment.slotId);
+    emitQueueUpdated(appointment.slot.doctorId, actor.clinicId);
 
     return appointment;
   }

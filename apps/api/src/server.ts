@@ -2,8 +2,10 @@ import http from "http";
 import { app } from "./app";
 import { env } from "./app/config/env";
 import prisma from "./lib/prisma";
+import { initSocketIO } from "./socket";
 
 const server = http.createServer(app);
+const io = initSocketIO(server);
 
 async function start() {
   // Test database connection before accepting traffic
@@ -11,13 +13,14 @@ async function start() {
   console.log("✅ Database connected");
 
   server.listen(env.PORT, () => {
-    console.log(`🚀 ClinicQ API running on port ${env.PORT} [${env.NODE_ENV}]`);
+    console.log(`🚀 ClinicQ API running on port ${env.PORT} [${env.NODE_ENV}] (Socket.IO enabled)`);
   });
 }
 
 // Graceful shutdown — close DB connections and drain in-flight requests
 async function shutdown(signal: string) {
   console.log(`\n⚠️  ${signal} received. Shutting down gracefully...`);
+  io.close();
   server.close(async () => {
     await prisma.$disconnect();
     console.log("✅ Server closed and DB disconnected");

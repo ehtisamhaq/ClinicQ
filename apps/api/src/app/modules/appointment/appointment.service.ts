@@ -7,6 +7,7 @@ import {
   SlotStatus,
 } from "../../../generated/prisma/client";
 import { BookingService, type BookingActor } from "./booking.service";
+import { emitQueueUpdated, emitSlotBooked } from "../../../socket";
 import type {
   AppointmentQuery,
   BookAppointmentInput,
@@ -246,6 +247,9 @@ export class AppointmentService {
       return rescheduled;
     });
 
+    emitSlotBooked(appointment.slot.doctorId, actor.clinicId, newSlotId);
+    emitQueueUpdated(appointment.slot.doctorId, actor.clinicId);
+
     return updated;
   }
 
@@ -294,6 +298,8 @@ export class AppointmentService {
 
       return updated;
     });
+
+    emitQueueUpdated(appointment.slot.doctorId, actor.clinicId);
 
     return cancelled;
   }
@@ -371,6 +377,8 @@ export class AppointmentService {
 
       return result;
     });
+
+    emitQueueUpdated(appointment.slot.doctorId, actor.clinicId);
 
     return updated;
   }

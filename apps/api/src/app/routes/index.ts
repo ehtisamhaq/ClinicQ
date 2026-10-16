@@ -6,6 +6,7 @@ import { slotRouter } from "../modules/slot/slot.route";
 import { publicRouter } from "../modules/public/public.route";
 
 import { appointmentRouter } from "../modules/appointment/appointment.route";
+import { queueRouter } from "../modules/queue/queue.route";
 
 const router: IRouter = Router();
 
@@ -23,6 +24,9 @@ router.use("/slots", slotRouter);
 
 // Appointment module
 router.use("/appointments", appointmentRouter);
+
+// Queue module
+router.use("/queue", queueRouter);
 
 // Public browsing endpoints
 router.use("/public", publicRouter);
