@@ -8,6 +8,7 @@ import { publicRouter } from "../modules/public/public.route";
 import { appointmentRouter } from "../modules/appointment/appointment.route";
 import { queueRouter } from "../modules/queue/queue.route";
 import { assistantRouter } from "../modules/assistant/assistant.route";
+import { knowledgeRouter } from "../modules/knowledge/knowledge.route";
 
 const router: IRouter = Router();
 
@@ -31,6 +32,9 @@ router.use("/queue", queueRouter);
 
 // Assistant AI module
 router.use("/assistant", assistantRouter);
+
+// Knowledge / RAG module
+router.use("/knowledge", knowledgeRouter);
 
 // Public browsing endpoints
 router.use("/public", publicRouter);
