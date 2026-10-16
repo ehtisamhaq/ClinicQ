@@ -1,4 +1,4 @@
-import express, { Express } from "express";
+import express, { type Express } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import pinoHttp from "pino-http";
@@ -58,8 +58,9 @@ app.use(
   }),
 );
 
-// Routes
+// Routes — mount under /api and also / as fallback
 app.use("/api", rootRouter);
+app.use("/", rootRouter);
 
 // 404 handler (registered after all routes)
 app.use(notFound);

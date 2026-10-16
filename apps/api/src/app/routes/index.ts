@@ -1,14 +1,13 @@
-import { Router, IRouter } from "express";
+import { Router, type IRouter } from "express";
 import healthRouter from "./health";
+import { authRouter } from "../modules/auth/auth.route";
 
 const router: IRouter = Router();
 
-// Mount all module routers here as they are built
+// Health check
 router.use("/", healthRouter);
 
-// Future module routes will be added below:
-// router.use("/auth", authRouter);
-// router.use("/doctors", doctorRouter);
-// etc.
+// Auth module
+router.use("/auth", authRouter);
 
 export default router;

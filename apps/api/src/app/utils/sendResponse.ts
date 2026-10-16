@@ -1,4 +1,4 @@
-import { Response } from "express";
+import type { Response } from "express";
 
 interface SendResponseOptions<T> {
   statusCode: number;

@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../../lib/prisma";
 import { AppError } from "./AppError";
 import { env } from "../config/env";
 import { sendResponse } from "../utils/sendResponse";

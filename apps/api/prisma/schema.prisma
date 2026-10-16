@@ -1,5 +1,6 @@
 generator client {
-  provider        = "prisma-client-js"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
   previewFeatures = ["postgresqlExtensions"]
 }
 
@@ -65,10 +66,10 @@ model Clinic {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users        User[]
-  knowledgeDocs KnowledgeDoc[]
+  users           User[]
+  knowledgeDocs   KnowledgeDoc[]
   assistantTraces AssistantTrace[]
-  auditLogs    AuditLog[]
+  auditLogs       AuditLog[]
 }
 
 model User {
@@ -81,10 +82,10 @@ model User {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  clinic          Clinic          @relation(fields: [clinicId], references: [id])
-  doctorProfile   DoctorProfile?
-  patientProfile  PatientProfile?
-  refreshTokens   RefreshToken[]
+  clinic         Clinic          @relation(fields: [clinicId], references: [id])
+  doctorProfile  DoctorProfile?
+  patientProfile PatientProfile?
+  refreshTokens  RefreshToken[]
 }
 
 model RefreshToken {
@@ -115,14 +116,14 @@ model DoctorProfile {
 }
 
 model DoctorSchedule {
-  id        String   @id @default(cuid())
-  doctorId  String
-  weekday   Int      // 0 = Sunday, 6 = Saturday
-  startTime String   // "HH:MM" in clinic timezone
-  endTime   String
-  slotMinutes Int    @default(15)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  doctorId    String
+  weekday     Int // 0 = Sunday, 6 = Saturday
+  startTime   String // "HH:MM" in clinic timezone
+  endTime     String
+  slotMinutes Int      @default(15)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
@@ -130,13 +131,13 @@ model DoctorSchedule {
 }
 
 model Slot {
-  id       String     @id @default(cuid())
-  doctorId String
-  startsAt DateTime
-  endsAt   DateTime
-  status   SlotStatus @default(AVAILABLE)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id        String     @id @default(cuid())
+  doctorId  String
+  startsAt  DateTime
+  endsAt    DateTime
+  status    SlotStatus @default(AVAILABLE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   doctor      DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   appointment Appointment?
@@ -153,27 +154,27 @@ model PatientProfile {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   appointments Appointment[]
   waitlists    WaitlistEntry[]
 }
 
 model Appointment {
-  id              String            @id @default(cuid())
-  slotId          String            @unique
-  patientId       String
-  status          AppointmentStatus @default(BOOKED)
-  reason          String
+  id               String            @id @default(cuid())
+  slotId           String            @unique
+  patientId        String
+  status           AppointmentStatus @default(BOOKED)
+  reason           String
   assistantSummary String?
-  urgency         UrgencyLevel      @default(ROUTINE)
-  bookedVia       BookingChannel    @default(MANUAL)
-  idempotencyKey  String            @unique
-  trackingToken   String            @unique @default(cuid())
-  checkedInAt     DateTime?
+  urgency          UrgencyLevel      @default(ROUTINE)
+  bookedVia        BookingChannel    @default(MANUAL)
+  idempotencyKey   String            @unique
+  trackingToken    String            @unique @default(cuid())
+  checkedInAt      DateTime?
   consultStartedAt DateTime?
-  completedAt     DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  completedAt      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   slot    Slot           @relation(fields: [slotId], references: [id])
   patient PatientProfile @relation(fields: [patientId], references: [id])
@@ -183,14 +184,14 @@ model Appointment {
 }
 
 model WaitlistEntry {
-  id        String        @id @default(cuid())
+  id        String         @id @default(cuid())
   patientId String
   doctorId  String
   from      DateTime
   to        DateTime
   status    WaitlistStatus @default(WAITING)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   patient PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
 }
@@ -204,16 +205,16 @@ model KnowledgeDoc {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  clinic Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  clinic Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   chunks KnowledgeChunk[]
 }
 
 model KnowledgeChunk {
-  id        String   @id @default(cuid())
+  id        String                       @id @default(cuid())
   docId     String
   content   String
   embedding Unsupported("vector(1536)")?
-  createdAt DateTime @default(now())
+  createdAt DateTime                     @default(now())
 
   doc KnowledgeDoc @relation(fields: [docId], references: [id], onDelete: Cascade)
 }

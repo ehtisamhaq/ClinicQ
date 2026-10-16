@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from "express";
-import { ZodTypeAny } from "zod";
+import type { Request, Response, NextFunction } from "express";
+import type { ZodTypeAny } from "zod";
 
 type ValidateTargets = {
   body?: ZodTypeAny;
