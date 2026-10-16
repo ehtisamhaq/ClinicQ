@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: clinicq_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: clinicq
+      POSTGRES_PASSWORD: clinicq_dev
+      POSTGRES_DB: clinicq
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

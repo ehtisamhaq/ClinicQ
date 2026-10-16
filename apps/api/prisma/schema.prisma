@@ -1,0 +1,248 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [pgvector(map: "vector")]
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  PATIENT
+  DOCTOR
+  RECEPTIONIST
+  ADMIN
+}
+
+enum SlotStatus {
+  AVAILABLE
+  BOOKED
+  BLOCKED
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CHECKED_IN
+  IN_CONSULTATION
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum UrgencyLevel {
+  ROUTINE
+  SOON
+  URGENT
+}
+
+enum BookingChannel {
+  MANUAL
+  ASSISTANT
+  RECEPTION
+}
+
+enum WaitlistStatus {
+  WAITING
+  OFFERED
+  BOOKED
+  EXPIRED
+}
+
+enum AuditActorType {
+  USER
+  ASSISTANT
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model Clinic {
+  id        String   @id @default(cuid())
+  name      String
+  timezone  String   @default("UTC")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  knowledgeDocs KnowledgeDoc[]
+  assistantTraces AssistantTrace[]
+  auditLogs    AuditLog[]
+}
+
+model User {
+  id                String   @id @default(cuid())
+  clinicId          String
+  email             String   @unique
+  passwordHash      String
+  role              Role
+  preferredLanguage String   @default("en")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  clinic          Clinic          @relation(fields: [clinicId], references: [id])
+  doctorProfile   DoctorProfile?
+  patientProfile  PatientProfile?
+  refreshTokens   RefreshToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DoctorProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  specialty         String
+  bio               String?
+  gender            String?
+  languages         String[] @default([])
+  consultationFee   Decimal
+  avgConsultMinutes Int      @default(15)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedules DoctorSchedule[]
+  slots     Slot[]
+}
+
+model DoctorSchedule {
+  id        String   @id @default(cuid())
+  doctorId  String
+  weekday   Int      // 0 = Sunday, 6 = Saturday
+  startTime String   // "HH:MM" in clinic timezone
+  endTime   String
+  slotMinutes Int    @default(15)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, weekday])
+}
+
+model Slot {
+  id       String     @id @default(cuid())
+  doctorId String
+  startsAt DateTime
+  endsAt   DateTime
+  status   SlotStatus @default(AVAILABLE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  doctor      DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  appointment Appointment?
+
+  @@unique([doctorId, startsAt])
+  @@index([doctorId, startsAt])
+}
+
+model PatientProfile {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  phone       String?
+  dateOfBirth DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  waitlists    WaitlistEntry[]
+}
+
+model Appointment {
+  id              String            @id @default(cuid())
+  slotId          String            @unique
+  patientId       String
+  status          AppointmentStatus @default(BOOKED)
+  reason          String
+  assistantSummary String?
+  urgency         UrgencyLevel      @default(ROUTINE)
+  bookedVia       BookingChannel    @default(MANUAL)
+  idempotencyKey  String            @unique
+  trackingToken   String            @unique @default(cuid())
+  checkedInAt     DateTime?
+  consultStartedAt DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  slot    Slot           @relation(fields: [slotId], references: [id])
+  patient PatientProfile @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@index([status])
+}
+
+model WaitlistEntry {
+  id        String        @id @default(cuid())
+  patientId String
+  doctorId  String
+  from      DateTime
+  to        DateTime
+  status    WaitlistStatus @default(WAITING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  patient PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model KnowledgeDoc {
+  id        String   @id @default(cuid())
+  clinicId  String
+  title     String
+  body      String
+  category  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clinic Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  chunks KnowledgeChunk[]
+}
+
+model KnowledgeChunk {
+  id        String   @id @default(cuid())
+  docId     String
+  content   String
+  embedding Unsupported("vector(1536)")?
+  createdAt DateTime @default(now())
+
+  doc KnowledgeDoc @relation(fields: [docId], references: [id], onDelete: Cascade)
+}
+
+model AssistantTrace {
+  id        String   @id @default(cuid())
+  clinicId  String
+  patientId String
+  requestId String   @unique @default(cuid())
+  steps     Json     @default("[]")
+  outcome   String?
+  createdAt DateTime @default(now())
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String         @id @default(cuid())
+  clinicId  String
+  actorType AuditActorType
+  actorId   String
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json           @default("{}")
+  createdAt DateTime       @default(now())
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@index([entity, entityId])
+  @@index([actorId])
+}
