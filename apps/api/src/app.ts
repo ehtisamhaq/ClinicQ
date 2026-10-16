@@ -7,7 +7,21 @@ import { globalErrorHandler, notFound } from "./app/errors/errorHandler";
 import rootRouter from "./app/routes/index";
 import pino from "pino";
 
-const logger = pino({ level: env.LOG_LEVEL, name: "clinicq-api" });
+// ─── Logger ───────────────────────────────────────────────────────────────────
+// API runs on Render (standard Node.js) — NOT on Vercel Edge.
+// Pino is fully supported here: it writes single-line JSON to stdout,
+// which Render (and any 12-factor host) captures automatically.
+// No file transport, no worker threads needed.
+//
+// ⚠️  Do NOT use Pino inside Next.js Edge Middleware or Vercel Edge Functions —
+//     those environments forbid the Node.js `vm` module that fast-redact needs.
+//     For web-side logging (apps/web) use a plain console.error wrapper instead.
+const logger = pino({
+  level: env.LOG_LEVEL,
+  name: "clinicq-api",
+  // Write clean, single-line JSON to stdout — the platform captures it.
+  // Omit the `transport` key entirely so Pino uses its fast default pipeline.
+});
 
 export const app: Express = express();
 
@@ -26,11 +40,21 @@ app.use(
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
-// Structured request logging (no secrets/passwords logged)
+// Structured request logging — redact secrets at the serializer level,
+// never in transit, so the raw token never appears in log output.
 app.use(
   pinoHttp({
     logger,
-    redact: ["req.headers.authorization", "req.body.password", "req.body.refreshToken"],
+    redact: {
+      paths: [
+        "req.headers.authorization",
+        "req.body.password",
+        "req.body.refreshToken",
+        "req.body.newPassword",
+        "req.body.currentPassword",
+      ],
+      censor: "[REDACTED]",
+    },
   }),
 );
 
