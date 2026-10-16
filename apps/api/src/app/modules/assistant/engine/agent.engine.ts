@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { z } from "zod";
 import prisma from "../../../../lib/prisma";
 import { UrgencyLevel } from "../../../../generated/prisma/client";
 import { LlmFactory } from "../llm/llm.factory";
@@ -15,6 +16,26 @@ import type {
   SseEvent,
   TraceStep,
 } from "../types";
+
+export const intakeSchema = z.object({
+  specialty: z.string().default("General Medicine"),
+  urgency: z.nativeEnum(UrgencyLevel).default(UrgencyLevel.ROUTINE),
+  hardConstraints: z
+    .object({
+      maxFee: z.number().optional(),
+      gender: z.string().optional(),
+      dayOfWeek: z.array(z.number()).optional(),
+    })
+    .default({}),
+  softPreferences: z
+    .object({
+      preferredDoctorId: z.string().optional(),
+      timeOfDay: z.string().optional(),
+    })
+    .default({}),
+  isConfirmed: z.boolean().default(false),
+  reason: z.string().optional(),
+});
 
 export interface AgentEngineInput {
   messages: ChatMessage[];
@@ -95,16 +116,43 @@ export class AgentEngine {
         data: { message: "Analyzing your symptoms and preferences..." },
       });
 
+      const understandPrompt = `Analyze the conversation history and extract clinical intake:
+${this.messages.map((m) => `${m.role}: ${m.content}`).join("\n")}
+
+Clinic Specialties available:
+- "Cardiology": heart problems, chest fluttering, palpitations, high BP, cardiac symptoms (e.g. "buke chap", "heart flutter", "palpitations")
+- "Pediatrics": children, babies, infants, kid sickness
+- "General Medicine": all other general symptoms (fever, cold, headache, general checkup, abdominal pain)
+
+Output JSON matching schema:
+- specialty: "Cardiology" | "Pediatrics" | "General Medicine"
+- urgency: "ROUTINE" | "URGENT" | "EMERGENCY"
+- hardConstraints: { maxFee?: number, gender?: string, dayOfWeek?: number[] }
+- softPreferences: { timeOfDay?: string, preferredDoctorId?: string }
+- isConfirmed: boolean (true if user explicitly agreed to book a proposed slot)
+`;
+
       const structuredIntake: any = await llm.generateStructured(
-        `Analyze conversation history:\n${this.messages.map((m) => `${m.role}: ${m.content}`).join("\n")}`,
-        // Schema definition for understanding
-        undefined as any,
+        understandPrompt,
+        intakeSchema,
         SYSTEM_ASSISTANT_PROMPT,
       );
 
       const hardConstraints: HardConstraints = structuredIntake?.hardConstraints || {};
       const softPreferences: SoftPreferences = structuredIntake?.softPreferences || {};
-      const specialty: string = structuredIntake?.specialty || "General Medicine";
+      let specialty: string = structuredIntake?.specialty || "General Medicine";
+      if (
+        specialty === "General Medicine" &&
+        /\b(heart|cardio|flutter|palpitation|buke chap|বুক ধড়ফড়)\b/i.test(lastUserMessage)
+      ) {
+        specialty = "Cardiology";
+      }
+      if (
+        specialty === "General Medicine" &&
+        /\b(child|peds|pediatric|baby|বাচ্চা|শিশু)\b/i.test(lastUserMessage)
+      ) {
+        specialty = "Pediatrics";
+      }
       const urgency: UrgencyLevel = structuredIntake?.urgency || UrgencyLevel.ROUTINE;
 
       this.addStep({

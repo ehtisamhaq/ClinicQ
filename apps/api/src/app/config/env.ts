@@ -19,6 +19,7 @@ const envSchema = z.object({
 
   LLM_PROVIDER: z.string().default("openai"),
   LLM_API_KEY: z.string().optional(),
+  LLM_BASE_URL: z.string().optional(),
   LLM_MODEL: z.string().default("gpt-4o-mini"),
   EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),
 

@@ -7,16 +7,18 @@ export class LlmFactory {
   private static instance: LlmClient | null = null;
 
   static getClient(): LlmClient {
-    if (!this.instance) {
-      if (
-        env.LLM_API_KEY &&
-        env.LLM_API_KEY.startsWith("sk-") &&
-        !env.LLM_API_KEY.includes("...")
-      ) {
-        this.instance = new OpenAiClient();
-      } else {
-        this.instance = new MockLlmClient();
-      }
+    if (this.instance) {
+      return this.instance;
+    }
+    if (process.env.NODE_ENV === "test") {
+      return new MockLlmClient();
+    }
+    const apiKey = env.LLM_API_KEY || "";
+    const isConfigured = Boolean(apiKey && !apiKey.includes("...") && apiKey.length > 10);
+    if (isConfigured) {
+      this.instance = new OpenAiClient();
+    } else {
+      this.instance = new MockLlmClient();
     }
     return this.instance;
   }
