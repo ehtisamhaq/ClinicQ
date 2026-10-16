@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import type { SessionUser, UserRole } from "@/lib/api/types";
 
-// User session cookie name
 const USER_COOKIE = "clinicq_session_user";
+const ACCESS_TOKEN_COOKIE = "clinicq_access_token";
+const REFRESH_TOKEN_COOKIE = "clinicq_refresh_token";
 
 // Define role-specific home routes
 const ROLE_HOMES: Record<UserRole, string> = {
@@ -15,6 +16,8 @@ const ROLE_HOMES: Record<UserRole, string> = {
 
 // Route access definitions
 const ROLE_ROUTES: Record<string, UserRole[]> = {
+  "/book": ["PATIENT", "ADMIN", "RECEPTIONIST"],
+  "/assistant": ["PATIENT", "ADMIN", "RECEPTIONIST"],
   "/appointments": ["PATIENT", "ADMIN"],
   "/queue": ["RECEPTIONIST", "ADMIN"],
   "/walk-in": ["RECEPTIONIST", "ADMIN"],
@@ -29,11 +32,15 @@ const ROLE_ROUTES: Record<string, UserRole[]> = {
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Read session user cookie optimistically for proxy routing
+  // Read session user cookie and token cookies
   const userCookie = request.cookies.get(USER_COOKIE)?.value;
+  const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+  const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
+
   let user: SessionUser | null = null;
 
-  if (userCookie) {
+  // Only consider authenticated if user cookie AND an active token exist
+  if (userCookie && (accessToken || refreshToken)) {
     try {
       user = JSON.parse(userCookie) as SessionUser;
     } catch {

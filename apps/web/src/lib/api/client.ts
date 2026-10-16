@@ -60,8 +60,11 @@ async function request<T>(
   // Inject authentication on the server if session auth requested
   if (auth === "session" && IS_SERVER) {
     try {
-      const { getAccessToken } = await import("@/lib/auth/session");
-      const token = await getAccessToken();
+      const { getAccessToken, refreshServerSession } = await import("@/lib/auth/session");
+      let token = await getAccessToken();
+      if (!token) {
+        token = await refreshServerSession();
+      }
       if (token && !headers.has("Authorization")) {
         headers.set("Authorization", `Bearer ${token}`);
       }
