@@ -1,5 +1,6 @@
 import type { LlmClient } from "./llm.interface";
 import { OpenAiClient } from "./openai.client";
+import { GoogleAiClient } from "./google-ai.client";
 import { MockLlmClient } from "./mock.client";
 import { env } from "../../../config/env";
 
@@ -16,7 +17,16 @@ export class LlmFactory {
     const apiKey = env.LLM_API_KEY || "";
     const isConfigured = Boolean(apiKey && !apiKey.includes("...") && apiKey.length > 10);
     if (isConfigured) {
-      this.instance = new OpenAiClient();
+      const isGoogle =
+        env.LLM_PROVIDER === "google" ||
+        env.LLM_PROVIDER === "gemini" ||
+        apiKey.startsWith("AQ.") ||
+        apiKey.startsWith("AIza");
+      if (isGoogle) {
+        this.instance = new GoogleAiClient();
+      } else {
+        this.instance = new OpenAiClient();
+      }
     } else {
       this.instance = new MockLlmClient();
     }
