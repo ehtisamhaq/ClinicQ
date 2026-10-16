@@ -8,6 +8,7 @@ import {
 } from "../../../generated/prisma/client";
 import { BookingService, type BookingActor } from "./booking.service";
 import { emitQueueUpdated, emitSlotBooked } from "../../../socket";
+import { WaitlistService } from "../waitlist/waitlist.service";
 import type {
   AppointmentQuery,
   BookAppointmentInput,
@@ -250,6 +251,13 @@ export class AppointmentService {
     emitSlotBooked(appointment.slot.doctorId, actor.clinicId, newSlotId);
     emitQueueUpdated(appointment.slot.doctorId, actor.clinicId);
 
+    // Promote next patient on waitlist for the freed old slot
+    WaitlistService.offerNextInLine(
+      appointment.slot.doctorId,
+      appointment.slot.startsAt,
+      actor.clinicId,
+    ).catch((err) => console.warn("Waitlist offer error on reschedule:", err));
+
     return updated;
   }
 
@@ -300,6 +308,13 @@ export class AppointmentService {
     });
 
     emitQueueUpdated(appointment.slot.doctorId, actor.clinicId);
+
+    // Promote next patient on waitlist for the freed slot
+    WaitlistService.offerNextInLine(
+      appointment.slot.doctorId,
+      appointment.slot.startsAt,
+      actor.clinicId,
+    ).catch((err) => console.warn("Waitlist offer error on cancel:", err));
 
     return cancelled;
   }

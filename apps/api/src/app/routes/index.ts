@@ -9,6 +9,8 @@ import { appointmentRouter } from "../modules/appointment/appointment.route";
 import { queueRouter } from "../modules/queue/queue.route";
 import { assistantRouter } from "../modules/assistant/assistant.route";
 import { knowledgeRouter } from "../modules/knowledge/knowledge.route";
+import { waitlistRouter } from "../modules/waitlist/waitlist.route";
+import { adminRouter } from "../modules/admin/admin.route";
 
 const router: IRouter = Router();
 
@@ -35,6 +37,12 @@ router.use("/assistant", assistantRouter);
 
 // Knowledge / RAG module
 router.use("/knowledge", knowledgeRouter);
+
+// Waitlist module
+router.use("/waitlist", waitlistRouter);
+
+// Admin dashboard & audit module
+router.use("/admin", adminRouter);
 
 // Public browsing endpoints
 router.use("/public", publicRouter);
