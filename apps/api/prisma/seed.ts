@@ -206,10 +206,10 @@ async function main() {
   });
   console.log("✅ Patients seeded: Tanvir, Nusrat");
 
-  // 3. Weekly Schedules for all 3 Doctors (Sunday=0 to Thursday=4)
+  // 3. Weekly Schedules for all 3 Doctors (Sunday=0 to Saturday=6)
   const doctors = [drRahimProfile, drFatimaProfile, drKarimProfile];
   for (const doc of doctors) {
-    for (let weekday = 0; weekday <= 4; weekday++) {
+    for (let weekday = 0; weekday <= 6; weekday++) {
       await prisma.doctorSchedule.upsert({
         where: {
           doctorId_weekday: {
@@ -232,7 +232,7 @@ async function main() {
       });
     }
   }
-  console.log("✅ Weekly schedules (Sun-Thu, 09:00-13:00) seeded for all doctors");
+  console.log("✅ Weekly schedules (7 days, 09:00-13:00) seeded for all doctors");
 
   // 4. Generate Slots for Today + Next 6 Days
   const now = new Date();
@@ -241,34 +241,30 @@ async function main() {
   for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
     const slotDate = new Date(now);
     slotDate.setDate(now.getDate() + dayOffset);
-    const dayOfWeek = slotDate.getDay();
 
-    // Sunday (0) to Thursday (4) are working days
-    if (dayOfWeek >= 0 && dayOfWeek <= 4) {
-      for (const doc of doctors) {
-        // Create 8 slots between 09:00 and 11:00
-        for (let i = 0; i < 8; i++) {
-          const startsAt = new Date(slotDate);
-          startsAt.setHours(9, i * doc.avgConsultMinutes, 0, 0);
-          const endsAt = new Date(startsAt.getTime() + doc.avgConsultMinutes * 60 * 1000);
+    for (const doc of doctors) {
+      // Create 8 slots between 09:00 and 11:00
+      for (let i = 0; i < 8; i++) {
+        const startsAt = new Date(slotDate);
+        startsAt.setHours(9, i * doc.avgConsultMinutes, 0, 0);
+        const endsAt = new Date(startsAt.getTime() + doc.avgConsultMinutes * 60 * 1000);
 
-          await prisma.slot.upsert({
-            where: {
-              doctorId_startsAt: {
-                doctorId: doc.id,
-                startsAt,
-              },
-            },
-            update: {},
-            create: {
+        await prisma.slot.upsert({
+          where: {
+            doctorId_startsAt: {
               doctorId: doc.id,
               startsAt,
-              endsAt,
-              status: SlotStatus.AVAILABLE,
             },
-          });
-          totalSlots++;
-        }
+          },
+          update: {},
+          create: {
+            doctorId: doc.id,
+            startsAt,
+            endsAt,
+            status: SlotStatus.AVAILABLE,
+          },
+        });
+        totalSlots++;
       }
     }
   }

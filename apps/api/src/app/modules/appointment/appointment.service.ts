@@ -82,11 +82,24 @@ export class AppointmentService {
     if (patientId) where.patientId = patientId;
     if (doctorId) where.slot.doctorId = doctorId;
     if (status) where.status = status;
-
     if (from || to) {
-      where.slot.startsAt = {};
-      if (from) where.slot.startsAt.gte = new Date(from);
-      if (to) where.slot.startsAt.lte = new Date(to);
+      const startsAtFilter: any = {};
+      if (from) startsAtFilter.gte = new Date(from);
+      if (to) startsAtFilter.lte = new Date(to);
+
+      if (doctorId || actor.role === Role.DOCTOR) {
+        where.AND = [
+          ...(where.AND || []),
+          {
+            OR: [
+              { slot: { startsAt: startsAtFilter } },
+              { status: { in: [AppointmentStatus.IN_CONSULTATION, AppointmentStatus.CHECKED_IN] } },
+            ],
+          },
+        ];
+      } else {
+        where.slot.startsAt = startsAtFilter;
+      }
     }
 
     const [total, appointments] = await Promise.all([

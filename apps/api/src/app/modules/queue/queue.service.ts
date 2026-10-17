@@ -67,17 +67,28 @@ export class QueueService {
 
     const appointments = await prisma.appointment.findMany({
       where: {
-        slot: {
-          doctorId,
-          startsAt: { gte: startOfDay, lte: endOfDay },
-        },
-        status: {
-          in: [
-            AppointmentStatus.IN_CONSULTATION,
-            AppointmentStatus.CHECKED_IN,
-            AppointmentStatus.BOOKED,
-          ],
-        },
+        slot: { doctorId },
+        OR: [
+          // Any patient currently in consultation or waiting in clinic right now
+          {
+            status: {
+              in: [
+                AppointmentStatus.IN_CONSULTATION,
+                AppointmentStatus.CHECKED_IN,
+              ],
+            },
+          },
+          // Or any booked/completed appointment scheduled for today
+          {
+            status: {
+              in: [AppointmentStatus.BOOKED, AppointmentStatus.COMPLETED],
+            },
+            slot: {
+              doctorId,
+              startsAt: { gte: startOfDay, lte: endOfDay },
+            },
+          },
+        ],
       },
       include: {
         slot: { select: { startsAt: true, endsAt: true } },
