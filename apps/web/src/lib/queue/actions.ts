@@ -11,6 +11,7 @@ import {
   type WalkInBookingInput,
 } from "./validation";
 import type { AppointmentItem } from "@/lib/appointments/types";
+import type { DoctorQueueSummary, DoctorQueueDetails } from "./types";
 
 export interface QueueActionResult {
   success: boolean;
@@ -39,10 +40,8 @@ export async function updateQueueStatusAction(
   try {
     const res = await apiClient.patch<AppointmentItem>(
       `/appointments/${appointmentId}/status`,
-      {
-        auth: "session",
-        body: { status, reason },
-      }
+      { status, reason },
+      { auth: "session" }
     );
 
     // Revalidate affected operational views
@@ -108,11 +107,9 @@ export async function bookWalkInAction(
     if (autoCheckIn && createdAppointment?.id) {
       await apiClient.patch(
         `/appointments/${createdAppointment.id}/status`,
-        {
-          auth: "session",
-          body: { status: "CHECKED_IN" },
-        }
-      ).catch((err) => {
+        { status: "CHECKED_IN" },
+        { auth: "session" }
+      ).catch((err: unknown) => {
         console.warn("Auto check-in failed after walk-in booking:", err);
       });
     }
@@ -146,3 +143,22 @@ export async function bookWalkInAction(
     };
   }
 }
+
+/**
+ * Server Action to securely fetch the latest clinic queue overview with session auth
+ */
+export async function refreshClinicQueueAction(): Promise<DoctorQueueSummary[]> {
+  const { getClinicQueueOverview } = await import("./queries");
+  return getClinicQueueOverview();
+}
+
+/**
+ * Server Action to securely fetch doctor queue details with session auth
+ */
+export async function refreshDoctorQueueAction(
+  doctorId: string
+): Promise<DoctorQueueDetails | null> {
+  const { getDoctorQueueDetails } = await import("./queries");
+  return getDoctorQueueDetails(doctorId);
+}
+

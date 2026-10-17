@@ -199,27 +199,37 @@ export function AppointmentsTable({ appointments }: AppointmentsTableProps) {
   const renderStatusBadge = (status: AppointmentStatusType) => {
     switch (status) {
       case "BOOKED":
-        return <Badge variant="secondary" className="bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-200">Confirmed</Badge>;
+        return (
+          <Badge variant="secondary" className="bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/25 text-[11px] font-medium">
+            Confirmed
+          </Badge>
+        );
       case "CHECKED_IN":
         return (
-          <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 animate-pulse">
-            In Queue
+          <Badge variant="secondary" className="bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 text-[11px] font-semibold gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+            In Waiting Area
           </Badge>
         );
       case "IN_CONSULTATION":
         return (
-          <Badge variant="default" className="bg-emerald-600 text-white animate-pulse">
+          <Badge variant="default" className="bg-emerald-600 text-white font-bold text-[11px] gap-1.5 shadow-xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
             In Consultation
           </Badge>
         );
       case "COMPLETED":
-        return <Badge variant="outline" className="text-emerald-700 dark:text-emerald-300 border-emerald-300">Completed</Badge>;
+        return (
+          <Badge variant="outline" className="text-emerald-700 dark:text-emerald-300 border-emerald-500/30 bg-emerald-500/5 text-[11px] font-medium">
+            Completed
+          </Badge>
+        );
       case "CANCELLED":
-        return <Badge variant="destructive">Cancelled</Badge>;
+        return <Badge variant="destructive" className="text-[11px] font-medium">Cancelled</Badge>;
       case "NO_SHOW":
-        return <Badge variant="secondary">No Show</Badge>;
+        return <Badge variant="secondary" className="text-[11px] text-muted-foreground font-medium">No Show</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary" className="text-[11px]">{status}</Badge>;
     }
   };
 
@@ -227,12 +237,25 @@ export function AppointmentsTable({ appointments }: AppointmentsTableProps) {
   const renderUrgencyBadge = (urgency: UrgencyLevelType) => {
     switch (urgency) {
       case "EMERGENCY":
-        return <Badge variant="destructive" className="uppercase text-[10px] tracking-wider">Emergency</Badge>;
+        return (
+          <Badge variant="destructive" className="uppercase text-[10px] font-bold tracking-wider gap-1 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+            Emergency
+          </Badge>
+        );
       case "URGENT":
-        return <Badge variant="secondary" className="bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-200 text-[10px] uppercase tracking-wider">Urgent</Badge>;
+        return (
+          <Badge variant="secondary" className="bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 text-[10px] uppercase font-bold tracking-wider">
+            Urgent
+          </Badge>
+        );
       case "ROUTINE":
       default:
-        return <Badge variant="outline" className="text-[10px] text-muted-foreground uppercase tracking-wider">Routine</Badge>;
+        return (
+          <Badge variant="outline" className="text-[10px] uppercase font-medium border-border/80 text-muted-foreground tracking-wider">
+            Routine
+          </Badge>
+        );
     }
   };
 

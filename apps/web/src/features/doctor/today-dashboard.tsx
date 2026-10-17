@@ -31,6 +31,8 @@ import { formatElapsedMinutes, calculateConsultationDurationMinutes, sortAppoint
 import { updateQueueStatusAction } from "@/lib/queue/actions";
 import { useQueueSocket } from "@/lib/socket/use-queue-socket";
 
+import { refreshDoctorDashboardAction } from "@/lib/doctor/actions";
+
 interface TodayDashboardProps {
   doctor: DoctorProfileItem;
   initialQueueDetails: DoctorQueueDetails | null;
@@ -51,26 +53,15 @@ export function TodayDashboard({
   const [isUpdating, startUpdateTransition] = React.useTransition();
   const [tab, setTab] = React.useState<"waiting" | "upcoming" | "completed">("waiting");
 
-  // Re-fetch function on socket update or manual click
+  // Re-fetch function on socket update or manual click via authenticated server action
   const handleLiveRefresh = React.useCallback(async () => {
     try {
-      const [aptRes, qRes] = await Promise.all([
-        fetch(
-          getApiUrl(
-            `/appointments?doctorId=${doctor.id}&from=${new Date().toISOString().split("T")[0]}T00:00:00.000Z&limit=100`
-          ),
-          { cache: "no-store" }
-        ).catch(() => null),
-        fetch(getApiUrl(`/queue/doctor/${doctor.id}`), { cache: "no-store" }).catch(() => null),
-      ]);
-
-      if (aptRes?.ok) {
-        const aptJson = await aptRes.json();
-        if (aptJson.data) setAppointments(aptJson.data);
+      const data = await refreshDoctorDashboardAction(doctor.id);
+      if (data.appointments && data.appointments.length > 0) {
+        setAppointments(data.appointments);
       }
-      if (qRes?.ok) {
-        const qJson = await qRes.json();
-        if (qJson.data) setQueueDetails(qJson.data);
+      if (data.queueDetails) {
+        setQueueDetails(data.queueDetails);
       }
     } catch {
       // Ignore network flutter on background refresh

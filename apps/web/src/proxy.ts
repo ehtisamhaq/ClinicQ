@@ -19,7 +19,7 @@ const ROLE_ROUTES: Record<string, UserRole[]> = {
   "/book": ["PATIENT", "ADMIN", "RECEPTIONIST"],
   "/assistant": ["PATIENT", "ADMIN", "RECEPTIONIST"],
   "/appointments": ["PATIENT", "ADMIN"],
-  "/queue": ["RECEPTIONIST", "ADMIN"],
+  "/queue": ["RECEPTIONIST", "ADMIN", "DOCTOR"],
   "/walk-in": ["RECEPTIONIST", "ADMIN"],
   "/today": ["DOCTOR", "ADMIN"],
   "/dashboard": ["ADMIN"],
@@ -137,6 +137,7 @@ export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   if (refreshedAccessToken) {
     request.cookies.set(ACCESS_TOKEN_COOKIE, refreshedAccessToken);
+    requestHeaders.set("cookie", request.cookies.toString());
   }
 
   const response = NextResponse.next({
@@ -168,5 +169,15 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.svg$).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - static file extensions (.svg, .png, .jpg, .jpeg, .gif, .webp)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

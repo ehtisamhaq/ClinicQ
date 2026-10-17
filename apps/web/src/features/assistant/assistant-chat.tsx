@@ -325,68 +325,82 @@ export function AssistantChat({ initialLanguage = "en" }: AssistantChatProps) {
 
                 {/* Slot Proposal Card */}
                 {msg.proposal && (
-                  <Card className="border-primary/40 bg-card shadow-sm mt-3 text-foreground">
-                    <CardHeader className="p-3.5 pb-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <CardTitle className="text-sm font-bold flex items-center gap-1.5">
-                            <IconStethoscope className="h-4 w-4 text-primary" />
-                            Dr. {msg.proposal.doctorName}
-                          </CardTitle>
-                          <CardDescription className="text-xs">
-                            {msg.proposal.specialty}
-                          </CardDescription>
-                        </div>
-                        <Badge variant="default" className="text-xs">
-                          ৳{msg.proposal.fee}
-                        </Badge>
+                  <Card className="border-primary/30 bg-card/95 shadow-md mt-3 overflow-hidden text-foreground">
+                    <div className="bg-primary/5 px-4 py-2 border-b border-primary/15 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                        <IconSparkles className="h-3.5 w-3.5" />
+                        <span>Recommended Appointment Slot</span>
                       </div>
-                    </CardHeader>
+                      <Badge variant="default" className="text-xs font-bold px-2 py-0.5">
+                        ৳{msg.proposal.fee} BDT
+                      </Badge>
+                    </div>
 
-                    <CardContent className="p-3.5 pt-1 space-y-2">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <IconClock className="h-3.5 w-3.5 text-primary" />
-                        <span>
-                          {new Date(msg.proposal.startsAt).toLocaleDateString([], {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                          })}{" "}
-                          at{" "}
-                          {new Date(msg.proposal.startsAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold text-sm shadow-2xs">
+                          <IconStethoscope className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <h4 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                            Dr. {msg.proposal.doctorName}
+                            <IconCheck className="h-3.5 w-3.5 text-primary" />
+                          </h4>
+                          <p className="text-xs text-muted-foreground font-medium">
+                            {msg.proposal.specialty}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted text-foreground font-medium border border-border/60">
+                          <IconCalendar className="h-3.5 w-3.5 text-primary" />
+                          <span>
+                            {new Date(msg.proposal.startsAt).toLocaleDateString([], {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted text-foreground font-medium border border-border/60">
+                          <IconClock className="h-3.5 w-3.5 text-primary" />
+                          <span>
+                            {new Date(msg.proposal.startsAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Replanned Relaxations Note */}
                       {msg.proposal.changesRelaxed && msg.proposal.changesRelaxed.length > 0 && (
-                        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-[11px] text-amber-800 dark:text-amber-300">
+                        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-[11px] text-amber-800 dark:text-amber-300">
                           <strong>Note:</strong> We adjusted preferences to find this slot:{" "}
                           {msg.proposal.changesRelaxed.join(", ")}.
                         </div>
                       )}
                     </CardContent>
 
-                    <CardFooter className="p-3.5 pt-1 flex items-center justify-end gap-2">
+                    <CardFooter className="p-3.5 pt-0 flex items-center justify-end gap-2 border-t border-border/40 bg-muted/10">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleSendMessage("Show other times")}
                         disabled={isStreaming}
-                        className="text-xs h-7 px-3"
+                        className="text-xs h-7.5 px-3"
                       >
                         Other Times
                       </Button>
                       <Button
                         size="sm"
-                        onClick={() => handleSendMessage("Yes, book this slot")}
+                        onClick={() => handleSendMessage("Yes, please confirm and book this slot")}
                         disabled={isStreaming}
-                        className="text-xs h-7 px-3 gap-1 font-semibold"
+                        className="text-xs h-7.5 px-3.5 gap-1.5 font-semibold shadow-xs"
                       >
                         <IconCheck className="h-3.5 w-3.5" />
-                        Yes, Book It
+                        Confirm Appointment
                       </Button>
                     </CardFooter>
                   </Card>
@@ -454,8 +468,8 @@ export function AssistantChat({ initialLanguage = "en" }: AssistantChatProps) {
 
         {/* Live Tool Status Pill */}
         {currentToolStatus && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse pl-11">
-            <IconLoader className="h-3.5 w-3.5 animate-spin text-primary" />
+          <div className="my-2 p-3 rounded-xl border border-primary/20 bg-primary/5 flex items-center gap-2.5 text-xs text-primary font-medium shadow-2xs animate-pulse">
+            <IconLoader className="h-4 w-4 animate-spin text-primary shrink-0" />
             <span>{currentToolStatus}</span>
           </div>
         )}
@@ -465,20 +479,28 @@ export function AssistantChat({ initialLanguage = "en" }: AssistantChatProps) {
 
       {/* Starter Prompts (if chat is fresh) */}
       {messages.length <= 2 && (
-        <div className="px-4 pb-2 border-t border-border/40 pt-2 bg-muted/10">
-          <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-            Suggested Consultation Queries:
+        <div className="px-4 pb-3 border-t border-border/40 pt-2.5 bg-muted/10">
+          <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            Suggested Consultation Inquiries:
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {STARTER_PROMPTS.map((p, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleSendMessage(p.prompt)}
                 disabled={isStreaming}
-                className="rounded-full border border-border/80 bg-background/80 hover:bg-muted px-3 py-1 text-[11px] font-medium text-foreground transition-all shadow-2xs text-left"
+                className="group flex flex-col p-2.5 rounded-xl border border-border/80 bg-background/80 hover:bg-card hover:border-primary/40 hover:shadow-2xs text-left transition-all"
               >
-                {p.label} →
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {p.label}
+                  </span>
+                  <IconArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                </div>
+                <p className="text-[11px] text-muted-foreground line-clamp-1">
+                  {p.prompt}
+                </p>
               </button>
             ))}
           </div>

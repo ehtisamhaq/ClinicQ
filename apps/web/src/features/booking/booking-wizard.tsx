@@ -15,6 +15,7 @@ import {
   IconArrowRight,
   IconRefresh,
   IconTicket,
+  IconHourglass,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { bookManualAppointmentAction, type BookActionResult } from "@/lib/booking/actions";
+import { joinWaitlistAction } from "@/lib/waitlist/actions";
 import type { DoctorCatalogItem, SlotItem } from "@/lib/catalog/queries";
 
 export interface BookingWizardProps {
@@ -57,6 +59,22 @@ export function BookingWizard({
   // Booking submission state
   const [isPending, startTransition] = React.useTransition();
   const [bookingResult, setBookingResult] = React.useState<BookActionResult | null>(null);
+  const [isJoiningWaitlist, startWaitlistTransition] = React.useTransition();
+
+  const handleJoinWaitlist = (doctorId: string) => {
+    if (!user) {
+      toast.error("Please sign in to join the doctor's priority waitlist");
+      return;
+    }
+    startWaitlistTransition(async () => {
+      const res = await joinWaitlistAction(doctorId);
+      if (res.success) {
+        toast.success(res.message || "Added to priority waitlist!");
+      } else {
+        toast.error(res.error || "Failed to join waitlist");
+      }
+    });
+  };
 
   // Generate next 7 selectable dates
   const nextDates = React.useMemo(() => {
@@ -526,12 +544,28 @@ export function BookingWizard({
                     {slotError}
                   </div>
                 ) : slots.length === 0 ? (
-                  <div className="p-6 text-center border rounded-xl border-dashed bg-muted/20 space-y-1">
-                    <IconAlertCircle className="mx-auto h-6 w-6 text-amber-500 mb-1" />
-                    <p className="text-xs font-medium text-foreground">No available slots for this date</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {(selectedDoctor.name || "Doctor").replace(/^Dr\.\s*/i, "")} has no open turns on this day. Try another date above.
-                    </p>
+                  <div className="p-6 text-center border rounded-xl border-dashed bg-muted/20 space-y-3">
+                    <div className="space-y-1">
+                      <IconAlertCircle className="mx-auto h-6 w-6 text-amber-500 mb-1" />
+                      <p className="text-xs font-medium text-foreground">No available slots for this date</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {(selectedDoctor.name || "Doctor").replace(/^Dr\.\s*/i, "")} has no open turns on this day. Join the waitlist to be offered an opening automatically!
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 text-xs border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10"
+                      disabled={isJoiningWaitlist}
+                      onClick={() => handleJoinWaitlist(selectedDoctor.id)}
+                    >
+                      {isJoiningWaitlist ? (
+                        <IconLoader className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <IconHourglass className="h-3.5 w-3.5 text-amber-500" />
+                      )}
+                      Join Priority Waitlist
+                    </Button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">

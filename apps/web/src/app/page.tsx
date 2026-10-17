@@ -92,45 +92,73 @@ export default function HomePage() {
 
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               <Link href="/assistant" className="w-full sm:w-auto">
-                <Button size="lg" className="w-full sm:w-auto gap-2 px-6 shadow-md text-sm font-semibold">
+                <Button size="lg" className="w-full sm:w-auto gap-2 px-6 shadow-md text-sm font-semibold transition-transform hover:scale-102">
                   <IconRobot className="h-4 w-4" />
                   Talk to AI Assistant
                   <IconArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/book" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 px-6 text-sm">
-                  <IconCalendar className="h-4 w-4" />
-                  Manual Doctor Booking
+                <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 px-6 text-sm hover:bg-muted/80">
+                  <IconCalendar className="h-4 w-4 text-primary" />
+                  Browse Specialists
                 </Button>
               </Link>
               <Link href="/track" className="w-full sm:w-auto">
-                <Button variant="ghost" size="lg" className="w-full sm:w-auto gap-2 px-6 text-sm">
+                <Button variant="ghost" size="lg" className="w-full sm:w-auto gap-2 px-6 text-sm text-muted-foreground hover:text-foreground">
                   <IconClockPlay className="h-4 w-4" />
-                  Live Queue Tracker
+                  Track Live Queue
                 </Button>
               </Link>
+            </div>
+
+            {/* Live Reliability & Metrics Strip */}
+            <div className="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto pt-8 border-t border-border/50">
+              <div className="flex flex-col items-center p-3 rounded-xl bg-card/50 border border-border/60 shadow-2xs">
+                <span className="text-xl sm:text-2xl font-bold font-heading text-primary">100%</span>
+                <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider text-center mt-0.5">
+                  Conflict-Free Slots
+                </span>
+              </div>
+              <div className="flex flex-col items-center p-3 rounded-xl bg-card/50 border border-border/60 shadow-2xs">
+                <span className="text-xl sm:text-2xl font-bold font-heading text-foreground">~14m</span>
+                <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider text-center mt-0.5">
+                  Adaptive Wait Tracking
+                </span>
+              </div>
+              <div className="flex flex-col items-center p-3 rounded-xl bg-card/50 border border-border/60 shadow-2xs">
+                <span className="text-xl sm:text-2xl font-bold font-heading text-foreground">EN + বাংলা</span>
+                <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider text-center mt-0.5">
+                  Multilingual AI
+                </span>
+              </div>
+              <div className="flex flex-col items-center p-3 rounded-xl bg-card/50 border border-border/60 shadow-2xs">
+                <span className="text-xl sm:text-2xl font-bold font-heading text-emerald-600 dark:text-emerald-400">Live</span>
+                <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider text-center mt-0.5">
+                  Socket.IO Queue Sync
+                </span>
+              </div>
             </div>
           </div>
         </section>
 
         {/* Feature Grid */}
-        <section className="border-t border-border/60 bg-muted/30 py-16 sm:py-24">
+        <section className="border-t border-border/60 bg-muted/20 py-16 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              <h2 className="text-2xl font-bold font-heading tracking-tight text-foreground sm:text-3xl">
                 Engineered for Patients, Doctors, and Reception
               </h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                No double bookings. No blind queues. Full clinical context on every turn.
+              <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
+                Guaranteed zero double bookings, honest queue estimates, and clinical context on every turn.
               </p>
             </div>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {/* Feature 1 */}
-              <Card className="border border-border/80 bg-card/80 backdrop-blur-xs transition-shadow hover:shadow-md">
+              <Card className="border border-border/80 bg-card/80 backdrop-blur-xs transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-md">
                 <CardHeader>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary mb-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-3 shadow-2xs">
                     <IconRobot className="h-5 w-5" />
                   </div>
                   <CardTitle className="text-lg">Conversational Booking</CardTitle>

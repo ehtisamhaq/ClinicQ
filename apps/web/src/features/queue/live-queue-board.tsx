@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getApiUrl } from "@/lib/config";
 import {
   IconStethoscope,
   IconClock,
@@ -31,7 +30,11 @@ import type {
   CheckedInQueueItem,
   UpcomingBookedItem,
 } from "@/lib/queue/types";
-import { updateQueueStatusAction } from "@/lib/queue/actions";
+import {
+  updateQueueStatusAction,
+  refreshClinicQueueAction,
+  refreshDoctorQueueAction,
+} from "@/lib/queue/actions";
 import { useQueueSocket } from "@/lib/socket/use-queue-socket";
 
 interface LiveQueueBoardProps {
@@ -44,7 +47,6 @@ export function LiveQueueBoard({
   initialSelectedDoctorDetails,
 }: LiveQueueBoardProps) {
   const router = useRouter();
-
   const [summaries, setSummaries] = React.useState<DoctorQueueSummary[]>(initialSummaries);
   const [selectedDoctorId, setSelectedDoctorId] = React.useState<string>(
     initialSelectedDoctorDetails?.doctor.id || initialSummaries[0]?.doctorId || ""
@@ -55,27 +57,25 @@ export function LiveQueueBoard({
   const [isLoadingDetails, setIsLoadingDetails] = React.useState(false);
   const [isUpdatingStatus, startStatusTransition] = React.useTransition();
 
-  // Fetch full details for the currently selected doctor
+  // Fetch full details for the currently selected doctor via authenticated server action
   const fetchDoctorDetails = React.useCallback(async (docId: string) => {
     if (!docId) return;
     try {
-      const res = await fetch(getApiUrl(`/queue/doctor/${docId}`), { cache: "no-store" });
-      if (res.ok) {
-        const json = await res.json();
-        setDetails(json.data || null);
+      const data = await refreshDoctorQueueAction(docId);
+      if (data) {
+        setDetails(data);
       }
     } catch {
       // Keep existing details if network flickers
     }
   }, []);
 
-  // Refresh summaries and details on socket update or periodic poll
+  // Refresh summaries and details on socket update or periodic poll via authenticated server action
   const handleLiveRefresh = React.useCallback(async () => {
     try {
-      const res = await fetch(getApiUrl("/queue/clinic"), { cache: "no-store" });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data) setSummaries(json.data);
+      const updatedSummaries = await refreshClinicQueueAction();
+      if (updatedSummaries && updatedSummaries.length > 0) {
+        setSummaries(updatedSummaries);
       }
     } catch {
       // Silent error on polling
@@ -120,12 +120,25 @@ export function LiveQueueBoard({
   const renderUrgencyBadge = (urgency: string) => {
     switch (urgency) {
       case "EMERGENCY":
-        return <Badge variant="destructive" className="text-[10px] uppercase">Emergency</Badge>;
+        return (
+          <Badge variant="destructive" className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 gap-1 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+            Emergency
+          </Badge>
+        );
       case "URGENT":
-        return <Badge variant="secondary" className="bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-200 text-[10px] uppercase">Urgent</Badge>;
+        return (
+          <Badge variant="secondary" className="bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5">
+            Urgent
+          </Badge>
+        );
       case "ROUTINE":
       default:
-        return <Badge variant="outline" className="text-[10px] text-muted-foreground uppercase">Routine</Badge>;
+        return (
+          <Badge variant="outline" className="text-[10px] uppercase font-medium border-border/80 text-muted-foreground px-2 py-0.5">
+            Routine
+          </Badge>
+        );
     }
   };
 
@@ -203,49 +216,59 @@ export function LiveQueueBoard({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {summaries.map((doc) => {
             const isSelected = doc.doctorId === selectedDoctorId;
-            const docName = doc.doctorEmail.split("@")[0];
+            const docName = doc.doctorEmail
+              .split("@")[0]
+              .replace(/\./g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase());
+            const initials = docName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
             return (
               <button
                 key={doc.doctorId}
                 type="button"
                 onClick={() => handleSelectDoctor(doc.doctorId)}
-                className={`relative flex flex-col p-3.5 rounded-xl border text-left transition-all ${
+                className={`relative flex flex-col p-4 rounded-xl border text-left transition-all ${
                   isSelected
-                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-sm"
-                    : "border-border/80 bg-card hover:bg-muted/50 text-foreground"
+                    ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm"
+                    : "border-border/80 bg-card/80 hover:bg-muted/40 hover:border-border hover:shadow-2xs text-foreground"
                 }`}
               >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="truncate">
-                    <div className="font-semibold text-xs text-foreground truncate">
-                      Dr. {docName}
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs shadow-2xs">
+                      {initials}
                     </div>
-                    <div className="text-[11px] text-muted-foreground truncate">
-                      {doc.specialty}
+                    <div className="truncate">
+                      <div className="font-semibold text-xs text-foreground truncate">
+                        Dr. {docName}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground truncate font-medium">
+                        {doc.specialty}
+                      </div>
                     </div>
                   </div>
                   {doc.inConsultationCount > 0 ? (
-                    <Badge variant="default" className="text-[9px] px-1.5 py-0 bg-emerald-600 text-white animate-pulse shrink-0">
+                    <Badge variant="default" className="text-[9px] px-1.5 py-0 bg-emerald-600 text-white shrink-0 font-bold gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                       In Room
                     </Badge>
                   ) : (
-                    <Badge variant="secondary" className="text-[9px] px-1.5 py-0 text-muted-foreground shrink-0">
+                    <Badge variant="secondary" className="text-[9px] px-1.5 py-0 text-muted-foreground shrink-0 font-medium">
                       Idle
                     </Badge>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-border/50">
-                  <div className="flex items-center gap-1 text-muted-foreground">
+                <div className="flex items-center justify-between text-xs pt-2.5 border-t border-border/50">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
                     <IconUsers className="h-3.5 w-3.5 text-primary" />
                     <span>
-                      <strong className="text-foreground">{doc.checkedInCount}</strong> in line
+                      <strong className="text-foreground">{doc.checkedInCount}</strong> waiting
                     </span>
                   </div>
-                  <div className="text-[11px] text-muted-foreground">
+                  <Badge variant="outline" className="text-[10px] font-semibold border-primary/20 text-foreground">
                     ~{doc.estimatedTotalWaitMinutes}m wait
-                  </div>
+                  </Badge>
                 </div>
               </button>
             );
