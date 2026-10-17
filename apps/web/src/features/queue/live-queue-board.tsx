@@ -265,6 +265,10 @@ export function LiveQueueBoard({
                     <span>
                       <strong className="text-foreground">{doc.checkedInCount}</strong> waiting
                     </span>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span>
+                      <strong className="text-foreground">{doc.bookedCount}</strong> booked
+                    </span>
                   </div>
                   <Badge variant="outline" className="text-[10px] font-semibold border-primary/20 text-foreground">
                     ~{doc.estimatedTotalWaitMinutes}m wait
@@ -343,7 +347,7 @@ export function LiveQueueBoard({
                   <div className="text-xs text-muted-foreground">
                     Doctor is currently idle. No patient in consultation.
                   </div>
-                  {details.checkedInQueue.length > 0 && (
+                  {details.checkedInQueue.length > 0 ? (
                     <Button
                       size="sm"
                       onClick={() =>
@@ -359,7 +363,23 @@ export function LiveQueueBoard({
                       <IconPlayerPlay className="h-3.5 w-3.5" />
                       Call Next Patient ({details.checkedInQueue[0]!.patientInitials})
                     </Button>
-                  )}
+                  ) : details.upcomingBooked.length > 0 ? (
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        handleUpdateStatus(
+                          details.upcomingBooked[0]!.id,
+                          "IN_CONSULTATION",
+                          `Admitted upcoming patient ${details.upcomingBooked[0]!.patientInitials} into room!`
+                        )
+                      }
+                      disabled={isUpdatingStatus}
+                      className="gap-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <IconPlayerPlay className="h-3.5 w-3.5" />
+                      Admit Booked Patient ({details.upcomingBooked[0]!.patientInitials})
+                    </Button>
+                  ) : null}
                 </CardContent>
               </Card>
             )}
@@ -434,25 +454,35 @@ export function LiveQueueBoard({
             )}
           </div>
 
-          {/* LANE 3: Scheduled Today (Booked) (4 cols) */}
+          {/* LANE 3: Upcoming Booked Appointments (4 cols) */}
           <div className="lg:col-span-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <IconClock className="h-4 w-4 text-sky-500" />
-                Scheduled Today ({details.upcomingBooked.length})
+                Upcoming Bookings ({details.upcomingBooked.length})
               </span>
             </div>
 
             {details.upcomingBooked.length === 0 ? (
               <Card className="border-border/80 border-dashed bg-muted/20">
                 <CardContent className="p-8 text-center text-xs text-muted-foreground">
-                  No further booked appointments scheduled for today.
+                  No upcoming booked appointments for this doctor.
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
                 {details.upcomingBooked.map((item) => {
-                  const time = new Date(item.slotStartsAt).toLocaleTimeString([], {
+                  const slotDate = new Date(item.slotStartsAt);
+                  const isToday = slotDate.toDateString() === new Date().toDateString();
+                  const tomorrowDate = new Date();
+                  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+                  const isTomorrow = tomorrowDate.toDateString() === slotDate.toDateString();
+                  const dateLabel = isToday
+                    ? "Today"
+                    : isTomorrow
+                    ? "Tomorrow"
+                    : slotDate.toLocaleDateString([], { month: "short", day: "numeric" });
+                  const time = slotDate.toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                   });
@@ -467,7 +497,7 @@ export function LiveQueueBoard({
                             </div>
                             <div className="text-[11px] text-muted-foreground flex items-center gap-1">
                               <IconClock className="h-3 w-3" />
-                              Slot: {time}
+                              <span>{dateLabel}, {time}</span>
                             </div>
                           </div>
                           {renderUrgencyBadge(item.urgency)}
@@ -477,7 +507,7 @@ export function LiveQueueBoard({
                           {item.reason}
                         </div>
 
-                        <div className="flex items-center justify-between pt-1">
+                        <div className="flex items-center justify-between pt-1 gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -494,21 +524,40 @@ export function LiveQueueBoard({
                             No-Show
                           </Button>
 
-                          <Button
-                            size="sm"
-                            onClick={() =>
-                              handleUpdateStatus(
-                                item.id,
-                                "CHECKED_IN",
-                                `Patient ${item.patientInitials} checked in! Added to queue.`
-                              )
-                            }
-                            disabled={isUpdatingStatus}
-                            className="h-7 text-xs px-3 gap-1 bg-amber-600 hover:bg-amber-700 text-white"
-                          >
-                            <IconUserCheck className="h-3.5 w-3.5" />
-                            Check In
-                          </Button>
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                handleUpdateStatus(
+                                  item.id,
+                                  "CHECKED_IN",
+                                  `Patient ${item.patientInitials} checked in! Added to waiting lobby.`
+                                )
+                              }
+                              disabled={isUpdatingStatus}
+                              className="h-7 text-xs px-2.5 gap-1 bg-amber-600 hover:bg-amber-700 text-white"
+                            >
+                              <IconUserCheck className="h-3.5 w-3.5" />
+                              Check In
+                            </Button>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleUpdateStatus(
+                                  item.id,
+                                  "IN_CONSULTATION",
+                                  `Admitted patient ${item.patientInitials} directly to consultation room!`
+                                )
+                              }
+                              disabled={isUpdatingStatus}
+                              className="h-7 text-xs px-2.5 gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 font-medium"
+                            >
+                              <IconPlayerPlay className="h-3 w-3" />
+                              Admit
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

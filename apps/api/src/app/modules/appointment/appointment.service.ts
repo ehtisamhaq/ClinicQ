@@ -359,6 +359,9 @@ export class AppointmentService {
       if (newStatus === AppointmentStatus.CHECKED_IN) {
         updateData.checkedInAt = new Date();
       } else if (newStatus === AppointmentStatus.IN_CONSULTATION) {
+        if (!appointment.checkedInAt) {
+          updateData.checkedInAt = new Date();
+        }
         updateData.consultStartedAt = new Date();
       } else if (newStatus === AppointmentStatus.COMPLETED) {
         updateData.completedAt = new Date();
@@ -424,11 +427,14 @@ export class AppointmentService {
       actor.role === Role.PATIENT && appointment.patient.userId === actor.id;
 
     if (current === AppointmentStatus.BOOKED && next === AppointmentStatus.CHECKED_IN) {
-      return isStaff;
+      return isStaff || isAssignedDoctor;
     }
 
-    if (current === AppointmentStatus.CHECKED_IN && next === AppointmentStatus.IN_CONSULTATION) {
-      return isAssignedDoctor || actor.role === Role.ADMIN;
+    if (
+      (current === AppointmentStatus.CHECKED_IN || current === AppointmentStatus.BOOKED) &&
+      next === AppointmentStatus.IN_CONSULTATION
+    ) {
+      return isAssignedDoctor || actor.role === Role.ADMIN || actor.role === Role.RECEPTIONIST;
     }
 
     if (current === AppointmentStatus.IN_CONSULTATION && next === AppointmentStatus.COMPLETED) {
@@ -436,14 +442,14 @@ export class AppointmentService {
     }
 
     if (current === AppointmentStatus.BOOKED && next === AppointmentStatus.NO_SHOW) {
-      return isStaff;
+      return isStaff || isAssignedDoctor;
     }
 
     if (
       (current === AppointmentStatus.BOOKED || current === AppointmentStatus.CHECKED_IN) &&
       next === AppointmentStatus.CANCELLED
     ) {
-      return isPatientOwner || isStaff;
+      return isPatientOwner || isStaff || isAssignedDoctor;
     }
 
     return false;

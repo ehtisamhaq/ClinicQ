@@ -60,10 +60,9 @@ export class QueueService {
       doctor.avgConsultMinutes,
     );
 
-    // Today boundaries
+    // Timezone-safe start window (captures today in UTC, UTC+6, and any upcoming booked slots)
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
     const appointments = await prisma.appointment.findMany({
       where: {
@@ -78,14 +77,14 @@ export class QueueService {
               ],
             },
           },
-          // Or any booked/completed appointment scheduled for today
+          // Or any booked/completed appointment scheduled from today onwards
           {
             status: {
               in: [AppointmentStatus.BOOKED, AppointmentStatus.COMPLETED],
             },
             slot: {
               doctorId,
-              startsAt: { gte: startOfDay, lte: endOfDay },
+              startsAt: { gte: windowStart },
             },
           },
         ],
@@ -196,8 +195,7 @@ export class QueueService {
     });
 
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
     const summaries = await Promise.all(
       doctors.map(async (doc) => {
@@ -216,7 +214,7 @@ export class QueueService {
           }),
           prisma.appointment.count({
             where: {
-              slot: { doctorId: doc.id, startsAt: { gte: startOfDay, lte: endOfDay } },
+              slot: { doctorId: doc.id, startsAt: { gte: windowStart } },
               status: AppointmentStatus.BOOKED,
             },
           }),

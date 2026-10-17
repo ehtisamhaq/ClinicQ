@@ -128,6 +128,16 @@ describe("Appointment Module Tests", () => {
       ).toBe(true);
     });
 
+    it("should allow assigned DOCTOR to admit a BOOKED patient directly into consultation", () => {
+      expect(
+        validate(
+          AppointmentStatus.BOOKED,
+          AppointmentStatus.IN_CONSULTATION,
+          assignedDoctorActor,
+        ),
+      ).toBe(true);
+    });
+
     it("should forbid other DOCTOR from starting consultation on patient assigned to another doctor", () => {
       expect(
         validate(
