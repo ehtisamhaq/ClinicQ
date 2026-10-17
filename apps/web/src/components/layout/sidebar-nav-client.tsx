@@ -48,8 +48,7 @@ export function SidebarNavClient({ user }: SidebarNavClientProps) {
   ];
 
   const doctorItems: NavItem[] = [
-    { title: "Today's Consultations", href: "/today", icon: IconStethoscope },
-    { title: "All Appointments", href: "/appointments", icon: IconCalendarEvent },
+    { title: "Doctor Console", href: "/today", icon: IconStethoscope },
     { title: "Live Queue Board", href: "/queue", icon: IconUserCheck },
   ];
 

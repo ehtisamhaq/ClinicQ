@@ -18,7 +18,7 @@ const ROLE_HOMES: Record<UserRole, string> = {
 const ROLE_ROUTES: Record<string, UserRole[]> = {
   "/book": ["PATIENT", "ADMIN", "RECEPTIONIST"],
   "/assistant": ["PATIENT", "ADMIN", "RECEPTIONIST"],
-  "/appointments": ["PATIENT", "DOCTOR", "ADMIN"],
+  "/appointments": ["PATIENT", "ADMIN"],
   "/queue": ["RECEPTIONIST", "ADMIN", "DOCTOR"],
   "/walk-in": ["RECEPTIONIST", "ADMIN"],
   "/today": ["DOCTOR", "ADMIN"],
