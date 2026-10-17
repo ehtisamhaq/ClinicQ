@@ -27,9 +27,11 @@ export interface DoctorCatalogItem {
 export interface SlotItem {
   id: string;
   doctorId: string;
-  clinicId: string;
-  startTime: string;
-  endTime: string;
+  clinicId?: string;
+  startsAt?: string;
+  endsAt?: string;
+  startTime?: string;
+  endTime?: string;
   status: "AVAILABLE" | "BOOKED" | "BLOCKED";
 }
 

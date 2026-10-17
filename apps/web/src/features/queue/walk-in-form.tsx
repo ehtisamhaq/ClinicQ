@@ -65,8 +65,15 @@ export function WalkInForm({ doctors }: WalkInFormProps) {
         );
         if (!cancelled && res.ok) {
           const json = await res.json();
-          const available = ((json?.data as SlotItem[]) || []).filter(
-            (s) => s.status === "AVAILABLE"
+          const rawList = Array.isArray(json?.data) ? json.data : [];
+          const available = rawList.map((s: any) => ({
+            ...s,
+            startTime: s.startsAt || s.startTime,
+            endTime: s.endsAt || s.endTime,
+            startsAt: s.startsAt || s.startTime,
+            endsAt: s.endsAt || s.endTime,
+          })).filter(
+            (s: SlotItem) => s.status === "AVAILABLE"
           );
           setSlots(available);
           if (available[0]) {
@@ -231,10 +238,15 @@ export function WalkInForm({ doctors }: WalkInFormProps) {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {slots.map((slot) => {
-                  const time = new Date(slot.startTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
+                  const rawTime = slot.startsAt || slot.startTime;
+                  const dateObj = rawTime ? new Date(rawTime) : null;
+                  const time = dateObj && !isNaN(dateObj.getTime())
+                    ? dateObj.toLocaleTimeString([], {
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      })
+                    : "--:--";
                   const isSelected = selectedSlotId === slot.id;
 
                   return (

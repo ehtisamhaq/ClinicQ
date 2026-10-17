@@ -132,11 +132,25 @@ export function BookingWizard({
           getApiUrl(`/slots/doctor/${doctorId}?from=${startOfDay}&to=${endOfDay}`)
         );
         const json = await fallbackRes.json();
-        const available = (json.data || []).filter((s: SlotItem) => s.status === "AVAILABLE");
+        const rawList = Array.isArray(json?.data) ? json.data : [];
+        const available = rawList.map((s: any) => ({
+          ...s,
+          startTime: s.startsAt || s.startTime,
+          endTime: s.endsAt || s.endTime,
+          startsAt: s.startsAt || s.startTime,
+          endsAt: s.endsAt || s.endTime,
+        })).filter((s: SlotItem) => s.status === "AVAILABLE");
         setSlots(available);
       } else {
         const json = await res.json();
-        const available = (json.data || []).filter((s: SlotItem) => s.status === "AVAILABLE");
+        const rawList = Array.isArray(json?.data) ? json.data : [];
+        const available = rawList.map((s: any) => ({
+          ...s,
+          startTime: s.startsAt || s.startTime,
+          endTime: s.endsAt || s.endTime,
+          startsAt: s.startsAt || s.startTime,
+          endsAt: s.endsAt || s.endTime,
+        })).filter((s: SlotItem) => s.status === "AVAILABLE");
         setSlots(available);
       }
     } catch {
@@ -573,10 +587,15 @@ export function BookingWizard({
                   <div className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
                     {slots.map((slot) => {
                       const isSlotSelected = selectedSlot?.id === slot.id;
-                      const timeLabel = new Date(slot.startTime).toLocaleTimeString("en-US", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      });
+                      const rawTime = slot.startsAt || slot.startTime;
+                      const dateObj = rawTime ? new Date(rawTime) : null;
+                      const timeLabel = dateObj && !isNaN(dateObj.getTime())
+                        ? dateObj.toLocaleTimeString("en-US", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: true,
+                          })
+                        : "--:--";
                       return (
                         <button
                           key={slot.id}
