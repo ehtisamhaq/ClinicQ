@@ -2,9 +2,12 @@
 FROM oven/bun:1.2.4-alpine AS base
 WORKDIR /app
 
-# Install dependencies
+# Install system dependencies needed for Prisma and native extensions on Alpine
+RUN apk add --no-cache openssl libc6-compat
+
+# Install dependencies (ignoring lifecycle scripts so Prisma preinstall check doesn't fail)
 COPY package.json ./
-RUN bun install
+RUN bun install --ignore-scripts
 
 # Copy application source code and prisma schema
 COPY . .
