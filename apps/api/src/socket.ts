@@ -3,6 +3,8 @@ import { Server, type Socket } from "socket.io";
 import { env } from "./app/config/env";
 import { verifyAccessToken, verifySocketToken } from "./app/utils/jwt";
 
+import { isOriginAllowed } from "./app/utils/cors";
+
 let ioInstance: Server | null = null;
 
 export function initSocketIO(server: HttpServer): Server {
@@ -10,7 +12,13 @@ export function initSocketIO(server: HttpServer): Server {
 
   const io = new Server(server, {
     cors: {
-      origin: allowedOrigins,
+      origin: (requestOrigin, callback) => {
+        if (isOriginAllowed(requestOrigin, allowedOrigins)) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Origin ${requestOrigin} not allowed by CORS`));
+        }
+      },
       credentials: true,
       methods: ["GET", "POST"],
     },
@@ -23,6 +31,7 @@ export function initSocketIO(server: HttpServer): Server {
       socket.handshake.headers.authorization?.replace(/^Bearer\s+/i, "");
 
     if (!token) {
+      console.warn(`[Socket.IO] Handshake rejected for socket ${socket.id}: No token provided`);
       return next(new Error("Authentication required for WebSocket connection"));
     }
 
@@ -42,7 +51,8 @@ export function initSocketIO(server: HttpServer): Server {
       };
 
       next();
-    } catch {
+    } catch (err: unknown) {
+      console.warn(`[Socket.IO] Handshake rejected for socket ${socket.id}:`, err instanceof Error ? err.message : err);
       next(new Error("Invalid or expired authentication token"));
     }
   });

@@ -23,15 +23,24 @@ const logger = pino({
   // Omit the `transport` key entirely so Pino uses its fast default pipeline.
 });
 
+import { isOriginAllowed } from "./app/utils/cors";
+
 export const app: Express = express();
 
 // Security headers
 app.use(helmet());
 
-// CORS — explicit allowlist, credentials for httpOnly cookie BFF pattern
+// CORS — explicit allowlist with wildcard support, credentials for httpOnly cookie BFF pattern
+const allowedOrigins = env.CORS_ORIGIN.split(",").map((o) => o.trim());
 app.use(
   cors({
-    origin: env.CORS_ORIGIN.split(",").map((o) => o.trim()),
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin, allowedOrigins)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
     credentials: true,
   }),
 );

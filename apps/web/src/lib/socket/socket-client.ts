@@ -100,7 +100,7 @@ class SocketClientManager {
 
     this.socket = io(socketUrl, {
       auth: { token },
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -126,7 +126,8 @@ class SocketClientManager {
       }
     });
 
-    this.socket.on("connect_error", () => {
+    this.socket.on("connect_error", (err) => {
+      console.warn("[SocketClient] connect_error:", err?.message || err);
       this.setState("reconnecting");
     });
 
