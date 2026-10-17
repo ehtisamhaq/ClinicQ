@@ -22,8 +22,13 @@ interface PublicTrackerProps {
 export function PublicTracker({ token, initialData }: PublicTrackerProps) {
   const [data, setData] = React.useState<TrackingDetails>(initialData);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
-  const [lastUpdated, setLastUpdated] = React.useState<Date>(new Date());
+  const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null);
   const [secondsUntilPoll, setSecondsUntilPoll] = React.useState(10);
+
+  // Initialize timestamp on client mount to avoid prerendering unstable date
+  React.useEffect(() => {
+    setLastUpdated(new Date());
+  }, []);
 
   const fetchLatest = React.useCallback(async () => {
     setIsRefreshing(true);
@@ -335,7 +340,11 @@ export function PublicTracker({ token, initialData }: PublicTrackerProps) {
           </p>
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/80 pt-1">
             <IconInfoCircle className="h-3.5 w-3.5" />
-            <span>Last synchronized at {lastUpdated.toLocaleTimeString()}</span>
+            <span>
+              {lastUpdated
+                ? `Last synchronized at ${lastUpdated.toLocaleTimeString()}`
+                : "Synchronizing..."}
+            </span>
           </div>
         </div>
       </div>
