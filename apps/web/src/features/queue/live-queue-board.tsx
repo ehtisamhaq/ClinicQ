@@ -40,11 +40,17 @@ import { useQueueSocket } from "@/lib/socket/use-queue-socket";
 interface LiveQueueBoardProps {
   initialSummaries: DoctorQueueSummary[];
   initialSelectedDoctorDetails: DoctorQueueDetails | null;
+  currentUser?: {
+    id: string;
+    email: string;
+    role: string;
+  } | null;
 }
 
 export function LiveQueueBoard({
   initialSummaries,
   initialSelectedDoctorDetails,
+  currentUser,
 }: LiveQueueBoardProps) {
   const router = useRouter();
   const [summaries, setSummaries] = React.useState<DoctorQueueSummary[]>(initialSummaries);
@@ -56,6 +62,11 @@ export function LiveQueueBoard({
   );
   const [isLoadingDetails, setIsLoadingDetails] = React.useState(false);
   const [isUpdatingStatus, startStatusTransition] = React.useTransition();
+
+  // Role check: Only staff (ADMIN/RECEPTIONIST) or the doctor assigned to this room can trigger status transitions
+  const isStaff = currentUser?.role === "ADMIN" || currentUser?.role === "RECEPTIONIST";
+  const isMyConsultRoom = currentUser?.role === "DOCTOR" && details?.doctor.email === currentUser.email;
+  const canManageRoom = isStaff || isMyConsultRoom;
 
   // Fetch full details for the currently selected doctor via authenticated server action
   const fetchDoctorDetails = React.useCallback(async (docId: string) => {
@@ -325,20 +336,26 @@ export function LiveQueueBoard({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 pt-2">
-                  <Button
-                    onClick={() =>
-                      handleUpdateStatus(
-                        details.currentConsultation!.id,
-                        "COMPLETED",
-                        "Consultation marked as completed!"
-                      )
-                    }
-                    disabled={isUpdatingStatus}
-                    className="w-full gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                  >
-                    <IconCircleCheck className="h-4 w-4" />
-                    Complete Consultation
-                  </Button>
+                  {canManageRoom ? (
+                    <Button
+                      onClick={() =>
+                        handleUpdateStatus(
+                          details.currentConsultation!.id,
+                          "COMPLETED",
+                          "Consultation marked as completed!"
+                        )
+                      }
+                      disabled={isUpdatingStatus}
+                      className="w-full gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <IconCircleCheck className="h-4 w-4" />
+                      Complete Consultation
+                    </Button>
+                  ) : (
+                    <div className="text-xs text-center py-1 text-muted-foreground font-medium">
+                      Consultation in progress
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ) : (
@@ -347,39 +364,43 @@ export function LiveQueueBoard({
                   <div className="text-xs text-muted-foreground">
                     Doctor is currently idle. No patient in consultation.
                   </div>
-                  {details.checkedInQueue.length > 0 ? (
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        handleUpdateStatus(
-                          details.checkedInQueue[0]!.id,
-                          "IN_CONSULTATION",
-                          `Called patient ${details.checkedInQueue[0]!.patientInitials} into room!`
-                        )
-                      }
-                      disabled={isUpdatingStatus}
-                      className="gap-1.5 text-xs font-semibold"
-                    >
-                      <IconPlayerPlay className="h-3.5 w-3.5" />
-                      Call Next Patient ({details.checkedInQueue[0]!.patientInitials})
-                    </Button>
-                  ) : details.upcomingBooked.length > 0 ? (
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        handleUpdateStatus(
-                          details.upcomingBooked[0]!.id,
-                          "IN_CONSULTATION",
-                          `Admitted upcoming patient ${details.upcomingBooked[0]!.patientInitials} into room!`
-                        )
-                      }
-                      disabled={isUpdatingStatus}
-                      className="gap-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
-                    >
-                      <IconPlayerPlay className="h-3.5 w-3.5" />
-                      Admit Booked Patient ({details.upcomingBooked[0]!.patientInitials})
-                    </Button>
-                  ) : null}
+                  {canManageRoom && (
+                    <>
+                      {details.checkedInQueue.length > 0 ? (
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            handleUpdateStatus(
+                              details.checkedInQueue[0]!.id,
+                              "IN_CONSULTATION",
+                              `Called patient ${details.checkedInQueue[0]!.patientInitials} into room!`
+                            )
+                          }
+                          disabled={isUpdatingStatus}
+                          className="gap-1.5 text-xs font-semibold"
+                        >
+                          <IconPlayerPlay className="h-3.5 w-3.5" />
+                          Call Next Patient ({details.checkedInQueue[0]!.patientInitials})
+                        </Button>
+                      ) : details.upcomingBooked.length > 0 ? (
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            handleUpdateStatus(
+                              details.upcomingBooked[0]!.id,
+                              "IN_CONSULTATION",
+                              `Admitted upcoming patient ${details.upcomingBooked[0]!.patientInitials} into room!`
+                            )
+                          }
+                          disabled={isUpdatingStatus}
+                          className="gap-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                          <IconPlayerPlay className="h-3.5 w-3.5" />
+                          Admit Booked Patient ({details.upcomingBooked[0]!.patientInitials})
+                        </Button>
+                      ) : null}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -429,24 +450,26 @@ export function LiveQueueBoard({
                         {item.reason}
                       </div>
 
-                      <div className="flex items-center justify-end gap-1.5 pt-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handleUpdateStatus(
-                              item.id,
-                              "IN_CONSULTATION",
-                              `Called patient ${item.patientInitials} into room!`
-                            )
-                          }
-                          disabled={isUpdatingStatus}
-                          className="h-7 text-xs px-2.5 gap-1"
-                        >
-                          <IconPlayerPlay className="h-3.5 w-3.5 text-emerald-600" />
-                          Call In
-                        </Button>
-                      </div>
+                      {canManageRoom && (
+                        <div className="flex items-center justify-end gap-1.5 pt-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleUpdateStatus(
+                                item.id,
+                                "IN_CONSULTATION",
+                                `Called patient ${item.patientInitials} into room!`
+                              )
+                            }
+                            disabled={isUpdatingStatus}
+                            className="h-7 text-xs px-2.5 gap-1"
+                          >
+                            <IconPlayerPlay className="h-3.5 w-3.5 text-emerald-600" />
+                            Call In
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -507,58 +530,64 @@ export function LiveQueueBoard({
                           {item.reason}
                         </div>
 
-                        <div className="flex items-center justify-between pt-1 gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              handleUpdateStatus(
-                                item.id,
-                                "NO_SHOW",
-                                `Marked patient ${item.patientInitials} as No-Show.`
-                              )
-                            }
-                            disabled={isUpdatingStatus}
-                            className="h-7 text-xs px-2 text-destructive hover:bg-destructive/10"
-                          >
-                            No-Show
-                          </Button>
-
-                          <div className="flex items-center gap-1.5">
+                        {canManageRoom ? (
+                          <div className="flex items-center justify-between pt-1 gap-1">
                             <Button
+                              variant="ghost"
                               size="sm"
                               onClick={() =>
                                 handleUpdateStatus(
                                   item.id,
-                                  "CHECKED_IN",
-                                  `Patient ${item.patientInitials} checked in! Added to waiting lobby.`
+                                  "NO_SHOW",
+                                  `Marked patient ${item.patientInitials} as No-Show.`
                                 )
                               }
                               disabled={isUpdatingStatus}
-                              className="h-7 text-xs px-2.5 gap-1 bg-amber-600 hover:bg-amber-700 text-white"
+                              className="h-7 text-xs px-2 text-destructive hover:bg-destructive/10"
                             >
-                              <IconUserCheck className="h-3.5 w-3.5" />
-                              Check In
+                              No-Show
                             </Button>
 
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                handleUpdateStatus(
-                                  item.id,
-                                  "IN_CONSULTATION",
-                                  `Admitted patient ${item.patientInitials} directly to consultation room!`
-                                )
-                              }
-                              disabled={isUpdatingStatus}
-                              className="h-7 text-xs px-2.5 gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 font-medium"
-                            >
-                              <IconPlayerPlay className="h-3 w-3" />
-                              Admit
-                            </Button>
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  handleUpdateStatus(
+                                    item.id,
+                                    "CHECKED_IN",
+                                    `Patient ${item.patientInitials} checked in! Added to waiting lobby.`
+                                  )
+                                }
+                                disabled={isUpdatingStatus}
+                                className="h-7 text-xs px-2.5 gap-1 bg-amber-600 hover:bg-amber-700 text-white"
+                              >
+                                <IconUserCheck className="h-3.5 w-3.5" />
+                                Check In
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleUpdateStatus(
+                                    item.id,
+                                    "IN_CONSULTATION",
+                                    `Admitted patient ${item.patientInitials} directly to consultation room!`
+                                  )
+                                }
+                                disabled={isUpdatingStatus}
+                                className="h-7 text-xs px-2.5 gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 font-medium"
+                              >
+                                <IconPlayerPlay className="h-3 w-3" />
+                                Admit
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="text-[11px] text-muted-foreground/70 italic pt-1">
+                            Assigned to this doctor&apos;s consult room
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   );
