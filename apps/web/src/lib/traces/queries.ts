@@ -1,5 +1,6 @@
 import "server-only";
 import { apiClient } from "@/lib/api/client";
+import { isUnauthorized, isForbidden } from "@/lib/api/types";
 import type { AssistantTrace, TracesFilterOptions, TracesResponse } from "./types";
 
 export async function getAssistantTraces(
@@ -32,7 +33,9 @@ export async function getAssistantTraces(
       },
     };
   } catch (err) {
-    console.error("Failed to load assistant traces:", err);
+    if (!isUnauthorized(err) && !isForbidden(err)) {
+      console.error("Failed to load assistant traces:", err);
+    }
     return {
       data: [],
       meta: { page, limit, total: 0, totalPages: 0 },
@@ -50,7 +53,9 @@ export async function getAssistantTraceById(id: string): Promise<AssistantTrace 
     });
     return res.data || null;
   } catch (err) {
-    console.error(`Failed to load assistant trace ${id}:`, err);
+    if (!isUnauthorized(err) && !isForbidden(err)) {
+      console.error(`Failed to load assistant trace ${id}:`, err);
+    }
     return null;
   }
 }

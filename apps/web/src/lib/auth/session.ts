@@ -85,12 +85,16 @@ export async function clearSession(): Promise<void> {
 export async function refreshServerSession(): Promise<string | null> {
   const refreshToken = await getRefreshToken();
   if (!refreshToken) {
-    await clearSession();
+    try {
+      await clearSession();
+    } catch {
+      // Cookies cannot be deleted in read-only Server Component phase
+    }
     return null;
   }
 
-    try {
-      const res = await fetch(getApiUrl("/auth/refresh"), {
+  try {
+    const res = await fetch(getApiUrl("/auth/refresh"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
@@ -98,7 +102,11 @@ export async function refreshServerSession(): Promise<string | null> {
     });
 
     if (!res.ok) {
-      await clearSession();
+      try {
+        await clearSession();
+      } catch {
+        // Cookies cannot be deleted in read-only Server Component phase
+      }
       return null;
     }
 
@@ -107,8 +115,15 @@ export async function refreshServerSession(): Promise<string | null> {
     const newRefreshToken = json.data?.refreshToken;
     const user = await getSessionUser();
 
-    if (newAccessToken && user) {
-      await setSession(newAccessToken, newRefreshToken || refreshToken, user);
+    if (newAccessToken) {
+      if (user) {
+        try {
+          await setSession(newAccessToken, newRefreshToken || refreshToken, user);
+        } catch {
+          // In Server Component rendering context, cookies() is read-only.
+          // Returning newAccessToken satisfies in-memory execution for this request!
+        }
+      }
       return newAccessToken;
     }
 

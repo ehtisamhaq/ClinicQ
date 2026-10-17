@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/client";
+import { isUnauthorized, isForbidden } from "@/lib/api/types";
 import type { AppointmentItem, AppointmentPagination } from "./types";
 
 export * from "./utils";
@@ -40,7 +41,9 @@ export async function getMyAppointments(
       },
     };
   } catch (error) {
-    console.error("Failed to load appointments:", error);
+    if (!isUnauthorized(error) && !isForbidden(error)) {
+      console.error("Failed to load appointments:", error);
+    }
     return {
       appointments: [],
       meta: { page: 1, limit: 50, total: 0, totalPages: 0 },

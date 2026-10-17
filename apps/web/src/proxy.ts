@@ -29,7 +29,23 @@ const ROLE_ROUTES: Record<string, UserRole[]> = {
   "/agent-traces": ["ADMIN"],
 };
 
-export function proxy(request: NextRequest) {
+function isJwtExpired(token?: string): boolean {
+  if (!token) return true;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3 || !parts[1]) return true;
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const jsonStr = Buffer.from(base64, "base64").toString("utf-8");
+    const payload = JSON.parse(jsonStr);
+    if (!payload.exp) return false;
+    // Buffer with 15 seconds margin
+    return payload.exp * 1000 < Date.now() + 15000;
+  } catch {
+    return true;
+  }
+}
+
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Read session user cookie and token cookies
@@ -38,6 +54,8 @@ export function proxy(request: NextRequest) {
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
 
   let user: SessionUser | null = null;
+  let refreshedAccessToken: string | null = null;
+  let refreshedRefreshToken: string | null = null;
 
   // Only consider authenticated if user cookie AND an active token exist
   if (userCookie && (accessToken || refreshToken)) {
@@ -48,12 +66,49 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // If user is authenticated but accessToken is expired, refresh it proactively
+  if (user && isJwtExpired(accessToken) && refreshToken) {
+    try {
+      const apiUrl =
+        process.env.API_URL ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        "http://localhost:4000/api/v1";
+      const res = await fetch(`${apiUrl}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+        cache: "no-store",
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        refreshedAccessToken = json.data?.accessToken || null;
+        refreshedRefreshToken = json.data?.refreshToken || null;
+      } else {
+        // Refresh token is revoked or expired -> clear session
+        user = null;
+      }
+    } catch {
+      // Network failure reaching API, allow downstream to handle
+    }
+  }
+
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
   // 1. If authenticated user tries to access /login or /register, redirect to their role home
   if (isAuthPage && user) {
     const homeUrl = new URL(ROLE_HOMES[user.role] || "/", request.url);
-    return NextResponse.redirect(homeUrl);
+    const redirectRes = NextResponse.redirect(homeUrl);
+    if (refreshedAccessToken) {
+      redirectRes.cookies.set(ACCESS_TOKEN_COOKIE, refreshedAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 15 * 60,
+      });
+    }
+    return redirectRes;
   }
 
   // 2. Check if current route requires authentication or specific roles
@@ -62,7 +117,12 @@ export function proxy(request: NextRequest) {
       if (!user) {
         const loginUrl = new URL("/login", request.url);
         loginUrl.searchParams.set("from", pathname);
-        return NextResponse.redirect(loginUrl);
+        const redirectRes = NextResponse.redirect(loginUrl);
+        // Clear stale session cookies
+        redirectRes.cookies.delete(USER_COOKIE);
+        redirectRes.cookies.delete(ACCESS_TOKEN_COOKIE);
+        redirectRes.cookies.delete(REFRESH_TOKEN_COOKIE);
+        return redirectRes;
       }
 
       if (!allowedRoles.includes(user.role)) {
@@ -73,7 +133,38 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  // Forward request with refreshed token if available
+  const requestHeaders = new Headers(request.headers);
+  if (refreshedAccessToken) {
+    request.cookies.set(ACCESS_TOKEN_COOKIE, refreshedAccessToken);
+  }
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  if (refreshedAccessToken) {
+    response.cookies.set(ACCESS_TOKEN_COOKIE, refreshedAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 15 * 60,
+    });
+    if (refreshedRefreshToken) {
+      response.cookies.set(REFRESH_TOKEN_COOKIE, refreshedRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60,
+      });
+    }
+  }
+
+  return response;
 }
 
 export const config = {

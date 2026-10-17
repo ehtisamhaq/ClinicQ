@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/client";
+import { isUnauthorized, isForbidden } from "@/lib/api/types";
 import type {
   AdminDashboardMetrics,
   KnowledgeDocument,
@@ -21,7 +22,9 @@ export async function getAdminDashboardMetrics(
     });
     return res.data || null;
   } catch (err) {
-    console.error("Failed to load admin metrics:", err);
+    if (!isUnauthorized(err) && !isForbidden(err)) {
+      console.error("Failed to load admin metrics:", err);
+    }
     return null;
   }
 }
@@ -37,7 +40,9 @@ export async function getAdminDoctors(): Promise<DoctorCatalogItem[]> {
     });
     return (res.data || []).map(formatDoctorCatalogItem);
   } catch (err) {
-    console.error("Failed to load clinic doctors:", err);
+    if (!isUnauthorized(err) && !isForbidden(err)) {
+      console.error("Failed to load clinic doctors:", err);
+    }
     return [];
   }
 }
@@ -57,7 +62,9 @@ export async function getAdminDoctorSchedules(
     );
     return res.data || [];
   } catch (err) {
-    console.error(`Failed to load schedules for doctor ${doctorId}:`, err);
+    if (!isUnauthorized(err) && !isForbidden(err)) {
+      console.error(`Failed to load schedules for doctor ${doctorId}:`, err);
+    }
     return [];
   }
 }
@@ -79,7 +86,9 @@ export async function getKnowledgeDocs(
     });
     return res.data || [];
   } catch (err) {
-    console.error("Failed to load knowledge documents:", err);
+    if (!isUnauthorized(err) && !isForbidden(err)) {
+      console.error("Failed to load knowledge documents:", err);
+    }
     return [];
   }
 }

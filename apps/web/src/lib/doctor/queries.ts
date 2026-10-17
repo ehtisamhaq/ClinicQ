@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/client";
+import { isUnauthorized, isForbidden } from "@/lib/api/types";
 import type { AppointmentItem } from "@/lib/appointments/types";
 import type { DoctorProfileItem } from "./types";
 import type { DoctorQueueDetails } from "@/lib/queue/types";
@@ -20,7 +21,9 @@ export async function getMyDoctorProfile(
     const doctors = res.data || [];
     return doctors.find((d) => d.user?.id === userId) || doctors[0] || null;
   } catch (err) {
-    console.error("Failed to fetch doctor profile:", err);
+    if (!isUnauthorized(err) && !isForbidden(err)) {
+      console.error("Failed to fetch doctor profile:", err);
+    }
     return null;
   }
 }
@@ -63,7 +66,9 @@ export async function getDoctorTodayAppointments(
 
     return res.data || [];
   } catch (err) {
-    console.error("Failed to fetch today appointments:", err);
+    if (!isUnauthorized(err) && !isForbidden(err)) {
+      console.error("Failed to fetch today appointments:", err);
+    }
     return [];
   }
 }
@@ -80,7 +85,9 @@ export async function getDoctorLiveQueue(
     });
     return res.data || null;
   } catch (err) {
-    console.error(`Failed to fetch live queue for doctor ${doctorId}:`, err);
+    if (!isUnauthorized(err) && !isForbidden(err)) {
+      console.error(`Failed to fetch live queue for doctor ${doctorId}:`, err);
+    }
     return null;
   }
 }

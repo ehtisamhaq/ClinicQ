@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/client";
+import { isUnauthorized, isForbidden } from "@/lib/api/types";
 import type { DoctorQueueSummary, DoctorQueueDetails } from "./types";
 
 /**
@@ -12,7 +13,9 @@ export async function getClinicQueueOverview(): Promise<DoctorQueueSummary[]> {
     });
     return res.data || [];
   } catch (error) {
-    console.error("Failed to fetch clinic queue overview:", error);
+    if (!isUnauthorized(error) && !isForbidden(error)) {
+      console.error("Failed to fetch clinic queue overview:", error);
+    }
     return [];
   }
 }
@@ -29,7 +32,9 @@ export async function getDoctorQueueDetails(
     });
     return res.data || null;
   } catch (error) {
-    console.error(`Failed to fetch queue for doctor ${doctorId}:`, error);
+    if (!isUnauthorized(error) && !isForbidden(error)) {
+      console.error(`Failed to fetch queue for doctor ${doctorId}:`, error);
+    }
     return null;
   }
 }
