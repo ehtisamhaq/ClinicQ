@@ -13,12 +13,7 @@ export const metadata: Metadata = {
   description: "View, manage, reschedule or cancel your clinic appointments and track live queue turns.",
 };
 
-export default async function MyAppointmentsPage() {
-  const [{ appointments }, waitlistEntries] = await Promise.all([
-    getMyAppointments(),
-    getMyWaitlist(),
-  ]);
-
+export default function MyAppointmentsPage() {
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8 space-y-8">
       {/* Page Header */}
@@ -53,11 +48,35 @@ export default async function MyAppointmentsPage() {
         </div>
       </div>
 
+      <React.Suspense fallback={<AppointmentsLoadingSkeleton />}>
+        <AppointmentsContent />
+      </React.Suspense>
+    </div>
+  );
+}
+
+async function AppointmentsContent() {
+  const [{ appointments }, waitlistEntries] = await Promise.all([
+    getMyAppointments(),
+    getMyWaitlist(),
+  ]);
+
+  return (
+    <>
       {/* Active Priority Waitlists */}
       <WaitlistSection entries={waitlistEntries} />
 
       {/* Dynamic Appointments Table */}
       <AppointmentsTable appointments={appointments} />
+    </>
+  );
+}
+
+function AppointmentsLoadingSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-10 bg-muted/60 rounded-xl" />
+      <div className="h-48 bg-muted/40 rounded-2xl" />
     </div>
   );
 }

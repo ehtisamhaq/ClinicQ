@@ -9,13 +9,7 @@ export const metadata: Metadata = {
   description: "Browse specialist doctors, select live available slots, and confirm appointments with conflict-free guarantees.",
 };
 
-export default async function BookDoctorPage() {
-  const [specialties, doctors, user] = await Promise.all([
-    getSpecialties(),
-    getDoctors(),
-    getSessionUser(),
-  ]);
-
+export default function BookDoctorPage() {
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8 space-y-6">
       <div>
@@ -27,11 +21,34 @@ export default async function BookDoctorPage() {
         </p>
       </div>
 
-      <BookingWizard
-        specialties={specialties}
-        initialDoctors={doctors}
-        user={user}
-      />
+      <React.Suspense fallback={<BookingLoadingSkeleton />}>
+        <BookDoctorContent />
+      </React.Suspense>
+    </div>
+  );
+}
+
+async function BookDoctorContent() {
+  const [specialties, doctors, user] = await Promise.all([
+    getSpecialties(),
+    getDoctors(),
+    getSessionUser(),
+  ]);
+
+  return (
+    <BookingWizard
+      specialties={specialties}
+      initialDoctors={doctors}
+      user={user}
+    />
+  );
+}
+
+function BookingLoadingSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-10 bg-muted/60 rounded-xl" />
+      <div className="h-64 bg-muted/40 rounded-2xl" />
     </div>
   );
 }

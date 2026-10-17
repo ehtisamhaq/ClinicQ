@@ -68,9 +68,12 @@ export function AppointmentsTable({ appointments }: AppointmentsTableProps) {
 
   // Reschedule Dialog state
   const [rescheduleTarget, setRescheduleTarget] = React.useState<AppointmentItem | null>(null);
-  const [rescheduleDate, setRescheduleDate] = React.useState<string>(() => {
-    return new Date().toISOString().split("T")[0];
-  });
+  const [rescheduleDate, setRescheduleDate] = React.useState<string>("");
+  const [minDate, setMinDate] = React.useState<string>("");
+
+  React.useEffect(() => {
+    setMinDate(new Date().toISOString().split("T")[0]);
+  }, []);
   const [availableSlots, setAvailableSlots] = React.useState<RescheduleSlot[]>([]);
   const [selectedNewSlotId, setSelectedNewSlotId] = React.useState<string | null>(null);
   const [isLoadingSlots, setIsLoadingSlots] = React.useState(false);
@@ -589,7 +592,7 @@ export function AppointmentsTable({ appointments }: AppointmentsTableProps) {
               <Input
                 id="rescheduleDate"
                 type="date"
-                min={new Date().toISOString().split("T")[0]}
+                min={minDate || undefined}
                 value={rescheduleDate}
                 onChange={(e) => handleDateChangeForReschedule(e.target.value)}
                 className="text-xs"

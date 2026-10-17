@@ -8,12 +8,26 @@ export const metadata: Metadata = {
   description: "Register walk-in clinic patients, assign available consultation slots, and check them into the live queue.",
 };
 
-export default async function WalkInPage() {
-  const doctors = await getDoctors();
-
+export default function WalkInPage() {
   return (
     <div className="container max-w-4xl mx-auto px-4 py-8 space-y-6">
-      <WalkInForm doctors={doctors} />
+      <React.Suspense fallback={<WalkInLoadingSkeleton />}>
+        <WalkInContent />
+      </React.Suspense>
+    </div>
+  );
+}
+
+async function WalkInContent() {
+  const doctors = await getDoctors();
+  return <WalkInForm doctors={doctors} />;
+}
+
+function WalkInLoadingSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-10 bg-muted/60 rounded-xl" />
+      <div className="h-64 bg-muted/40 rounded-2xl" />
     </div>
   );
 }

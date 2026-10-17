@@ -13,12 +13,22 @@ export const metadata: Metadata = {
   description: "Today's consultation schedule, patient intake summaries, urgency sorting, and one-click session tracking.",
 };
 
-export default async function TodayPage() {
+export default function TodayPage() {
+  return (
+    <div className="container max-w-6xl mx-auto px-4 py-8 space-y-6">
+      <React.Suspense fallback={<TodayLoadingSkeleton />}>
+        <TodayContent />
+      </React.Suspense>
+    </div>
+  );
+}
+
+async function TodayContent() {
   const user = await getSessionUser();
 
   if (!user) {
     return (
-      <div className="container max-w-5xl mx-auto px-4 py-8 text-center text-xs text-muted-foreground">
+      <div className="text-center text-xs text-muted-foreground py-12">
         Please sign in with a Doctor account to access the consultation console.
       </div>
     );
@@ -28,7 +38,7 @@ export default async function TodayPage() {
 
   if (!doctor) {
     return (
-      <div className="container max-w-5xl mx-auto px-4 py-8 text-center space-y-2">
+      <div className="text-center space-y-2 py-12">
         <h2 className="text-base font-semibold text-foreground">Doctor Profile Not Found</h2>
         <p className="text-xs text-muted-foreground">
           No clinical profile is associated with this account. Please contact clinic administration.
@@ -43,12 +53,22 @@ export default async function TodayPage() {
   ]);
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-8 space-y-6">
-      <TodayDashboard
-        doctor={doctor}
-        initialQueueDetails={queueDetails}
-        initialAppointments={appointments}
-      />
+    <TodayDashboard
+      doctor={doctor}
+      initialQueueDetails={queueDetails}
+      initialAppointments={appointments}
+    />
+  );
+}
+
+function TodayLoadingSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-12 bg-muted/60 rounded-xl" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="h-40 bg-muted/40 rounded-2xl md:col-span-2" />
+        <div className="h-40 bg-muted/40 rounded-2xl" />
+      </div>
     </div>
   );
 }

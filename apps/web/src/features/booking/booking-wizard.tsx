@@ -45,9 +45,11 @@ export function BookingWizard({
 
   // Selection state
   const [selectedDoctor, setSelectedDoctor] = React.useState<DoctorCatalogItem | null>(null);
-  const [selectedDate, setSelectedDate] = React.useState<string>(() => {
-    return new Date().toISOString().split("T")[0];
-  });
+  const [selectedDate, setSelectedDate] = React.useState<string>("");
+
+  React.useEffect(() => {
+    setSelectedDate(new Date().toISOString().split("T")[0]);
+  }, []);
   const [selectedSlot, setSelectedSlot] = React.useState<SlotItem | null>(null);
   const [reason, setReason] = React.useState<string>("");
 
