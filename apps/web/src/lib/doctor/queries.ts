@@ -32,22 +32,23 @@ export async function getMyDoctorProfile(
  * Fetch all appointments scheduled for today for this doctor
  */
 export async function getDoctorTodayAppointments(
-  doctorId?: string
+  doctorId?: string,
+  date?: string
 ): Promise<AppointmentItem[]> {
   try {
-    const now = new Date();
+    const baseDate = date ? new Date(date) : new Date();
     const from = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      baseDate.getFullYear(),
+      baseDate.getMonth(),
+      baseDate.getDate(),
       0,
       0,
       0
     ).toISOString();
     const to = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      baseDate.getFullYear(),
+      baseDate.getMonth(),
+      baseDate.getDate(),
       23,
       59,
       59,

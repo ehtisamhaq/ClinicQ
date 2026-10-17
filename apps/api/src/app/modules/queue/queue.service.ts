@@ -204,13 +204,13 @@ export class QueueService {
         const [inConsultation, checkedIn, booked, adaptiveMinutes] = await Promise.all([
           prisma.appointment.count({
             where: {
-              slot: { doctorId: doc.id, startsAt: { gte: startOfDay, lte: endOfDay } },
+              slot: { doctorId: doc.id },
               status: AppointmentStatus.IN_CONSULTATION,
             },
           }),
           prisma.appointment.count({
             where: {
-              slot: { doctorId: doc.id, startsAt: { gte: startOfDay, lte: endOfDay } },
+              slot: { doctorId: doc.id },
               status: AppointmentStatus.CHECKED_IN,
             },
           }),

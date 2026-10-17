@@ -74,7 +74,7 @@ export function LiveQueueBoard({
   const handleLiveRefresh = React.useCallback(async () => {
     try {
       const updatedSummaries = await refreshClinicQueueAction();
-      if (updatedSummaries && updatedSummaries.length > 0) {
+      if (Array.isArray(updatedSummaries)) {
         setSummaries(updatedSummaries);
       }
     } catch {

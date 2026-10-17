@@ -53,11 +53,20 @@ export function TodayDashboard({
   const [isUpdating, startUpdateTransition] = React.useTransition();
   const [tab, setTab] = React.useState<"waiting" | "upcoming" | "completed">("waiting");
 
+  const [todayString] = React.useState(() => new Date().toISOString().split("T")[0]);
+  const [tomorrowString] = React.useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  });
+  const [selectedDate, setSelectedDate] = React.useState<string>(todayString);
+  const [isRefreshingDate, setIsRefreshingDate] = React.useState(false);
+
   // Re-fetch function on socket update or manual click via authenticated server action
   const handleLiveRefresh = React.useCallback(async () => {
     try {
-      const data = await refreshDoctorDashboardAction(doctor.id);
-      if (data.appointments && data.appointments.length > 0) {
+      const data = await refreshDoctorDashboardAction(doctor.id, selectedDate);
+      if (Array.isArray(data.appointments)) {
         setAppointments(data.appointments);
       }
       if (data.queueDetails) {
@@ -65,6 +74,24 @@ export function TodayDashboard({
       }
     } catch {
       // Ignore network flutter on background refresh
+    }
+  }, [doctor.id, selectedDate]);
+
+  const handleDateChange = React.useCallback(async (targetDate: string) => {
+    setSelectedDate(targetDate);
+    setIsRefreshingDate(true);
+    try {
+      const data = await refreshDoctorDashboardAction(doctor.id, targetDate);
+      if (Array.isArray(data.appointments)) {
+        setAppointments(data.appointments);
+      }
+      if (data.queueDetails) {
+        setQueueDetails(data.queueDetails);
+      }
+    } catch {
+      toast.error("Failed to load consultations for selected date");
+    } finally {
+      setIsRefreshingDate(false);
     }
   }, [doctor.id]);
 
@@ -179,14 +206,40 @@ export function TodayDashboard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
+            <button
+              type="button"
+              onClick={() => handleDateChange(todayString)}
+              className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                selectedDate === todayString
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDateChange(tomorrowString)}
+              className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                selectedDate === tomorrowString
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Tomorrow
+            </button>
+          </div>
+
           <Button
             variant="outline"
             size="sm"
-            onClick={handleLiveRefresh}
+            onClick={() => handleLiveRefresh()}
             className="gap-1.5 text-xs"
+            disabled={isRefreshingDate}
           >
-            <IconRefresh className="h-3.5 w-3.5" />
+            <IconRefresh className={`h-3.5 w-3.5 ${isRefreshingDate ? "animate-spin" : ""}`} />
             Refresh
           </Button>
         </div>
@@ -197,7 +250,7 @@ export function TodayDashboard({
         <Card className="border-border/80 shadow-xs">
           <CardContent className="p-3.5 space-y-1">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-              Total Today
+              {selectedDate === todayString ? "Total Today" : "Total Scheduled"}
             </span>
             <div className="text-xl font-bold font-heading text-foreground">
               {appointments.length}

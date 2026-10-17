@@ -1,7 +1,7 @@
 import http from "http";
 import { app } from "./app";
 import { env } from "./app/config/env";
-import prisma from "./lib/prisma";
+import prisma, { pool } from "./lib/prisma";
 import { initSocketIO } from "./socket";
 
 const server = http.createServer(app);
@@ -23,6 +23,7 @@ async function shutdown(signal: string) {
   io.close();
   server.close(async () => {
     await prisma.$disconnect();
+    await pool.end();
     console.log("✅ Server closed and DB disconnected");
     process.exit(0);
   });
