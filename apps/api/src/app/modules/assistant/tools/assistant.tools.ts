@@ -1,9 +1,9 @@
 import { z } from "zod";
-import prisma from "../../../../lib/prisma";
 import { DoctorService } from "../../doctor/doctor.service";
 import { SlotService } from "../../slot/slot.service";
 import { BookingService } from "../../appointment/booking.service";
 import { AppointmentService } from "../../appointment/appointment.service";
+import { KnowledgeService } from "../../knowledge/knowledge.service";
 import {
   BookingChannel,
   Role,
@@ -144,37 +144,33 @@ export class AssistantTools {
     return result.appointments;
   }
 
+  /**
+   * RAG retrieval over clinic knowledge base (spec item 7).
+   * Delegates to KnowledgeService.search which queries KnowledgeChunk with keyword
+   * fallback (pgvector cosine similarity when embeddings are available).
+   * Results cite the source document title so the assistant can attribute answers.
+   * Returns an explicit "I do not have that information" message when nothing is found.
+   */
   static async searchClinicInfo(
     args: z.infer<typeof searchClinicInfoToolSchema>,
     ctx: ToolContext,
   ) {
-    const query = args.query.toLowerCase();
-    const docs = await prisma.knowledgeDoc.findMany({
-      where: {
-        clinicId: ctx.clinicId,
-        OR: [
-          { title: { contains: query, mode: "insensitive" } },
-          { body: { contains: query, mode: "insensitive" } },
-          { category: { contains: query, mode: "insensitive" } },
-        ],
-      },
-      take: 3,
-    });
+    const result = await KnowledgeService.search(args.query, ctx.clinicId, 3);
 
-    if (docs.length === 0) {
+    if (!result.found || result.results.length === 0) {
       return {
         found: false,
         message: "I do not have specific clinic information regarding that query.",
-        results: [],
+        results: [] as { title: string; category: string; content: string }[],
       };
     }
 
     return {
       found: true,
-      results: docs.map((d) => ({
-        title: d.title,
-        category: d.category,
-        content: d.body,
+      results: result.results.map((r) => ({
+        title: r.sourceTitle,
+        category: r.category,
+        content: r.content,
       })),
     };
   }

@@ -22,12 +22,25 @@ export class KnowledgeService {
 
       const chunks = chunkDocument(data.title, data.body);
       if (chunks.length > 0) {
-        await tx.knowledgeChunk.createMany({
-          data: chunks.map((content) => ({
-            docId: created.id,
-            content,
-          })),
-        });
+        for (const content of chunks) {
+          const chunk = await tx.knowledgeChunk.create({
+            data: {
+              docId: created.id,
+              content,
+            },
+          });
+          try {
+            const vector = await EmbeddingService.getEmbedding(content);
+            const vectorString = `[${vector.join(",")}]`;
+            await tx.$executeRaw`
+              UPDATE "KnowledgeChunk"
+              SET embedding = ${vectorString}::vector
+              WHERE id = ${chunk.id}
+            `;
+          } catch {
+            // Gracefully ignore if pgvector is not available in current db engine
+          }
+        }
       }
 
       return tx.knowledgeDoc.findUnique({
@@ -116,7 +129,7 @@ export class KnowledgeService {
         data: updateData,
       });
 
-      // If body or title was modified, regenerate chunks
+      // If body or title was modified, regenerate chunks with embeddings
       if (data.body !== undefined || data.title !== undefined) {
         await tx.knowledgeChunk.deleteMany({
           where: { docId: id },
@@ -127,12 +140,25 @@ export class KnowledgeService {
         const chunks = chunkDocument(newTitle, newBody);
 
         if (chunks.length > 0) {
-          await tx.knowledgeChunk.createMany({
-            data: chunks.map((content) => ({
-              docId: id,
-              content,
-            })),
-          });
+          for (const content of chunks) {
+            const chunk = await tx.knowledgeChunk.create({
+              data: {
+                docId: id,
+                content,
+              },
+            });
+            try {
+              const vector = await EmbeddingService.getEmbedding(content);
+              const vectorString = `[${vector.join(",")}]`;
+              await tx.$executeRaw`
+                UPDATE "KnowledgeChunk"
+                SET embedding = ${vectorString}::vector
+                WHERE id = ${chunk.id}
+              `;
+            } catch {
+              // Gracefully ignore if pgvector is not available
+            }
+          }
         }
       }
 
@@ -153,13 +179,60 @@ export class KnowledgeService {
   }
 
   /**
-   * Scoped RAG retrieval: searches clinic knowledge base and cites source title.
-   * If nothing relevant is found, returns 'I do not have that information'.
+   * Scoped RAG retrieval: searches clinic knowledge base with pgvector cosine
+   * similarity when embeddings exist, falling back to ILIKE keyword search.
+   * Cites source title and category. Returns 'I do not have that information' if unfound.
    */
   static async search(queryText: string, clinicId: string, limit = 3) {
-    const cleanQuery = queryText.trim().toLowerCase();
+    const cleanQuery = queryText.trim();
+    if (!cleanQuery) {
+      return {
+        found: false,
+        message: "I do not have that information",
+        results: [],
+      };
+    }
 
-    // 1. Keyword search over clinic chunks
+    // 1. Semantic pgvector search when available
+    try {
+      const queryVector = await EmbeddingService.getEmbedding(cleanQuery);
+      const vectorString = `[${queryVector.join(",")}]`;
+
+      const vectorResults = await prisma.$queryRaw<
+        Array<{
+          id: string;
+          content: string;
+          sourceTitle: string;
+          category: string;
+          distance: number;
+        }>
+      >`
+        SELECT c.id, c.content, d.title as "sourceTitle", d.category,
+               (c.embedding <=> ${vectorString}::vector) as distance
+        FROM "KnowledgeChunk" c
+        JOIN "KnowledgeDoc" d ON c."docId" = d.id
+        WHERE d."clinicId" = ${clinicId} AND c.embedding IS NOT NULL
+        ORDER BY distance ASC
+        LIMIT ${limit}
+      `;
+
+      const matches = vectorResults.filter((r) => r.distance < 0.65);
+      if (matches.length > 0) {
+        return {
+          found: true,
+          message: `Found ${matches.length} relevant clinic resources`,
+          results: matches.map((m) => ({
+            sourceTitle: m.sourceTitle,
+            category: m.category,
+            content: m.content,
+          })),
+        };
+      }
+    } catch {
+      // Fallback to keyword search below
+    }
+
+    // 2. Keyword fallback search over clinic chunks
     const chunks = await prisma.knowledgeChunk.findMany({
       where: {
         doc: { clinicId },

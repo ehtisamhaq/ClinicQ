@@ -15,7 +15,7 @@ export class GoogleAiClient implements LlmClient {
     this.google = createGoogleGenerativeAI({
       apiKey: key,
     });
-    this.modelName = model || env.LLM_MODEL || "gemini-3.5-flash-lite";
+    this.modelName = model || env.LLM_MODEL || "gemini-2.0-flash";
     this.fallback = new MockLlmClient();
   }
 

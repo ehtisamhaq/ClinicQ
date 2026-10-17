@@ -226,6 +226,38 @@ Output JSON matching schema:
         }
       }
 
+      // ─── Step 3: Clarify (if query is ambiguous with no symptom details) ───
+      const userMessages = this.messages.filter((m) => m.role === "user");
+      const hasSpecificCondition =
+        Boolean(structuredIntake?.reason && structuredIntake.reason.length > 5) ||
+        /\b(fever|cold|cough|headache|pain|stomach|chest|heart|flutter|baby|child|sick|vomit|rash|injury|allergy|bp|pressure|ব্যথা|জ্বর|কাশি|বুক|ধড়ফড়|বাচ্চা|অসুস্থ)\b/i.test(
+          lastUserMessage
+        );
+
+      const isAmbiguousGreetingOrIntent =
+        !hasSpecificCondition &&
+        /^(hi|hello|hey|i need a doctor|i want an appointment|book appointment|i want to see a doctor|can i see a doctor|doctor|help|ডাক্তার|অ্যাপয়েন্টমেন্ট|হেলো|হাই)[\.\!\?]?$/i.test(
+          lastUserMessage.trim()
+        );
+
+      if (isAmbiguousGreetingOrIntent && userMessages.length <= 3) {
+        this.addStep({
+          node: "clarify",
+          timestamp: new Date().toISOString(),
+          inputs: { userMessage: lastUserMessage },
+        });
+
+        const clarifyText =
+          this.locale === "bn"
+            ? "আমি আপনাকে সঠিক বিশেষজ্ঞ ডাক্তারের সাথে সংযুক্ত করতে পারি। অনুগ্রহ করে আপনার প্রধান সমস্যা বা উপসর্গগুলো সংক্ষেপে বলুন (যেমন: জ্বর বা সর্দি, বুকে ব্যথা বা ধড়ফড়, শিশুর অসুস্থতা, অথবা সাধারণ স্বাস্থ্য পরীক্ষা)?"
+            : "I can help connect you with the most appropriate doctor. Could you describe your symptoms or reason for the visit (e.g., fever, chest fluttering, pediatric concern, or a routine checkup)?";
+
+        this.onEvent({ event: "text", data: { text: clarifyText } });
+        await this.persistTrace("CLARIFICATION_REQUESTED");
+        this.onEvent({ event: "done", data: {} });
+        return;
+      }
+
       // ─── Step 4 & 5: Route & Search with Constraints ──────────────────────
       this.onEvent({
         event: "tool_status",
@@ -460,6 +492,43 @@ Output JSON matching schema:
         }
       }
     }
+
+    // 3. Fallback: Check the latest AssistantTrace for this patient to retrieve proposed slot
+    try {
+      const recentTrace = await prisma.assistantTrace.findFirst({
+        where: {
+          patientId: this.context.patientId,
+          clinicId: this.context.clinicId,
+          createdAt: { gte: new Date(Date.now() - 30 * 60 * 1000) },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      if (recentTrace && Array.isArray(recentTrace.steps)) {
+        for (const step of recentTrace.steps as any[]) {
+          if (step.node === "propose" && Array.isArray(step.proposals) && step.proposals.length > 0) {
+            const prop = step.proposals[0];
+            const slot = await prisma.slot.findUnique({
+              where: { id: prop.slotId },
+              include: { doctor: { include: { user: true } } },
+            });
+            if (slot && slot.status === "AVAILABLE" && slot.startsAt >= new Date()) {
+              return {
+                slotId: slot.id,
+                doctorId: slot.doctorId,
+                doctorName: slot.doctor.user.email.split("@")[0] || "Doctor",
+                specialty: slot.doctor.specialty,
+                fee: Number(slot.doctor.consultationFee),
+                startsAt: slot.startsAt.toISOString(),
+                endsAt: slot.endsAt.toISOString(),
+              };
+            }
+          }
+        }
+      }
+    } catch {
+      // Ignore trace lookup fallback failure
+    }
+
     return null;
   }
 
