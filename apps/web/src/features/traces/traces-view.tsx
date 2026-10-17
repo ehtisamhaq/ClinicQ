@@ -92,7 +92,7 @@ export function TracesView({ initialData }: TracesViewProps) {
         };
       default:
         return {
-          bg: "bg-surface-2 text-foreground border-border",
+          bg: "bg-muted text-foreground border-border",
           label: outcome || "Unknown",
           icon: IconTimeline,
         };
@@ -119,7 +119,7 @@ export function TracesView({ initialData }: TracesViewProps) {
       case "answerInfo":
         return <IconInfoCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />;
       default:
-        return <IconTimeline className="h-4 w-4 text-muted" />;
+        return <IconTimeline className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -135,72 +135,72 @@ export function TracesView({ initialData }: TracesViewProps) {
     <div className="space-y-6">
       {/* Top Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="rounded-xl border border-border/80 bg-surface p-4 shadow-2xs">
-          <div className="flex items-center gap-2 text-muted text-xs font-medium">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
             <IconTimeline className="h-4 w-4 text-primary" />
             <span>Total Traces</span>
           </div>
           <div className="text-2xl font-bold font-serif text-foreground mt-1">
             {totalCount}
           </div>
-          <div className="text-[11px] text-muted">All logged executions</div>
+          <div className="text-[11px] text-muted-foreground">All logged executions</div>
         </div>
 
-        <div className="rounded-xl border border-border/80 bg-surface p-4 shadow-2xs">
-          <div className="flex items-center gap-2 text-muted text-xs font-medium">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
             <IconCircleCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <span>Booked Sessions</span>
           </div>
           <div className="text-2xl font-bold font-serif text-foreground mt-1">
             {bookedCount}
           </div>
-          <div className="text-[11px] text-muted">
+          <div className="text-[11px] text-muted-foreground">
             {totalCount > 0 ? `${Math.round((bookedCount / totalCount) * 100)}% conversion` : "0%"}
           </div>
         </div>
 
-        <div className="rounded-xl border border-border/80 bg-surface p-4 shadow-2xs">
-          <div className="flex items-center gap-2 text-muted text-xs font-medium">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
             <IconArrowBackUp className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             <span>Replanned</span>
           </div>
           <div className="text-2xl font-bold font-serif text-foreground mt-1">
             {replannedCount}
           </div>
-          <div className="text-[11px] text-muted">Autonomous recovery</div>
+          <div className="text-[11px] text-muted-foreground">Autonomous recovery</div>
         </div>
 
-        <div className="rounded-xl border border-border/80 bg-surface p-4 shadow-2xs">
-          <div className="flex items-center gap-2 text-muted text-xs font-medium">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
             <IconAlertTriangle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
             <span>Emergencies</span>
           </div>
           <div className="text-2xl font-bold font-serif text-foreground mt-1">
             {emergencyCount}
           </div>
-          <div className="text-[11px] text-muted">Safety triage interventions</div>
+          <div className="text-[11px] text-muted-foreground">Safety triage interventions</div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
-          <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+          <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by Request ID or Patient ID..."
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-surface text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-xs"
           />
         </div>
 
         <div className="flex items-center gap-2">
-          <IconFilter className="h-4 w-4 text-muted shrink-0" />
+          <IconFilter className="h-4 w-4 text-muted-foreground shrink-0" />
           <select
             value={selectedOutcome}
             onChange={(e) => setSelectedOutcome(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            className="px-3 py-2 rounded-lg border border-border bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-xs"
           >
             <option value="ALL">All Outcomes</option>
             <option value="BOOKED">Booked</option>
@@ -213,11 +213,11 @@ export function TracesView({ initialData }: TracesViewProps) {
       </div>
 
       {/* Traces DataTable */}
-      <div className="rounded-2xl border border-border/80 bg-surface overflow-hidden shadow-xs">
+      <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="border-b border-border/80 bg-surface-2/60 text-xs font-semibold text-muted uppercase tracking-wider">
+              <tr className="border-b border-border bg-muted/60 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 <th className="px-5 py-3">Request ID</th>
                 <th className="px-5 py-3">Outcome</th>
                 <th className="px-5 py-3">Steps</th>
@@ -229,7 +229,7 @@ export function TracesView({ initialData }: TracesViewProps) {
             <tbody className="divide-y divide-border/60">
               {filteredTraces.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-muted">
+                  <td colSpan={6} className="px-5 py-12 text-center text-muted-foreground">
                     No assistant traces match your current filter.
                   </td>
                 </tr>
@@ -246,7 +246,7 @@ export function TracesView({ initialData }: TracesViewProps) {
                   return (
                     <tr
                       key={trace.id}
-                      className="hover:bg-surface-2/40 transition-colors cursor-pointer group"
+                      className="hover:bg-muted/50 transition-colors cursor-pointer group"
                       onClick={() => {
                         setSelectedTrace(trace);
                         setShowRawJson(false);
@@ -263,7 +263,7 @@ export function TracesView({ initialData }: TracesViewProps) {
                               e.stopPropagation();
                               copyToClipboard(trace.requestId, trace.id);
                             }}
-                            className="p-1 rounded hover:bg-surface-3 text-muted hover:text-foreground transition-colors"
+                            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                             title="Copy full Request ID"
                           >
                             {copiedId === trace.id ? (
@@ -273,7 +273,7 @@ export function TracesView({ initialData }: TracesViewProps) {
                             )}
                           </button>
                         </div>
-                        <div className="text-[11px] text-muted">
+                        <div className="text-[11px] text-muted-foreground">
                           Patient: {trace.patientId ? trace.patientId.slice(0, 8) : "Anonymous"}
                         </div>
                       </td>
@@ -299,19 +299,19 @@ export function TracesView({ initialData }: TracesViewProps) {
                             {replansCount} replan{replansCount > 1 ? "s" : ""}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted">0</span>
+                          <span className="text-xs text-muted-foreground">0</span>
                         )}
                       </td>
 
-                      <td className="px-5 py-3.5 text-xs text-muted">
+                      <td className="px-5 py-3.5 text-xs text-muted-foreground">
                         <div>{createdAtDate.toLocaleDateString()}</div>
-                        <div className="text-[11px] text-muted/80">{createdAtDate.toLocaleTimeString()}</div>
+                        <div className="text-[11px] text-muted-foreground/80">{createdAtDate.toLocaleTimeString()}</div>
                       </td>
 
                       <td className="px-5 py-3.5 text-right">
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-2 group-hover:bg-primary group-hover:text-primary-foreground border border-border group-hover:border-primary transition-all shadow-2xs"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted/60 group-hover:bg-primary group-hover:text-primary-foreground border border-border group-hover:border-primary transition-all shadow-xs"
                         >
                           <span>Inspect</span>
                           <IconChevronRight className="h-3.5 w-3.5" />
@@ -328,10 +328,10 @@ export function TracesView({ initialData }: TracesViewProps) {
 
       {/* Trace Detail Modal / Drawer */}
       {selectedTrace && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-4xl max-h-[90vh] bg-surface rounded-2xl border border-border shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-4xl max-h-[90vh] bg-card text-card-foreground rounded-2xl border border-border shadow-2xl flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="p-5 border-b border-border/80 flex items-center justify-between gap-4 bg-surface-2/40">
+            <div className="p-5 border-b border-border flex items-center justify-between gap-4 bg-muted/40">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                   <IconRobot className="h-5 w-5" />
@@ -354,7 +354,7 @@ export function TracesView({ initialData }: TracesViewProps) {
                       );
                     })()}
                   </div>
-                  <div className="flex items-center gap-2 text-xs font-mono text-muted mt-0.5">
+                  <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground mt-0.5">
                     <span>Req: {selectedTrace.requestId}</span>
                     <span>•</span>
                     <span>{new Date(selectedTrace.createdAt).toLocaleString()}</span>
@@ -369,7 +369,7 @@ export function TracesView({ initialData }: TracesViewProps) {
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                     showRawJson
                       ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-surface-2 text-foreground border-border hover:bg-surface-3"
+                      : "bg-card text-foreground border-border hover:bg-muted"
                   }`}
                 >
                   <IconCode className="h-3.5 w-3.5" />
@@ -381,7 +381,7 @@ export function TracesView({ initialData }: TracesViewProps) {
                   onClick={() =>
                     copyToClipboard(JSON.stringify(selectedTrace, null, 2), "modal-json")
                   }
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-border bg-surface-2 hover:bg-surface-3 text-foreground transition-colors"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-border bg-card hover:bg-muted text-foreground transition-colors"
                 >
                   {copiedId === "modal-json" ? (
                     <>
@@ -399,7 +399,7 @@ export function TracesView({ initialData }: TracesViewProps) {
                 <button
                   type="button"
                   onClick={() => setSelectedTrace(null)}
-                  className="p-1.5 rounded-lg border border-border hover:bg-surface-2 text-muted hover:text-foreground transition-colors"
+                  className="p-1.5 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <IconX className="h-4 w-4" />
                 </button>
@@ -409,14 +409,14 @@ export function TracesView({ initialData }: TracesViewProps) {
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-6 flex-1">
               {showRawJson ? (
-                <pre className="p-4 rounded-xl bg-surface-2 text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap leading-relaxed border border-border">
+                <pre className="p-4 rounded-xl bg-muted/40 text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap leading-relaxed border border-border">
                   {JSON.stringify(selectedTrace, null, 2)}
                 </pre>
               ) : (
                 <div className="space-y-6">
                   {/* Step-by-step visual pipeline */}
                   <div className="space-y-4">
-                    <h3 className="text-xs uppercase font-semibold tracking-wider text-muted font-sans">
+                    <h3 className="text-xs uppercase font-semibold tracking-wider text-muted-foreground font-sans">
                       Execution Pipeline ({Array.isArray(selectedTrace.steps) ? selectedTrace.steps.length : 0} steps)
                     </h3>
 
@@ -429,14 +429,14 @@ export function TracesView({ initialData }: TracesViewProps) {
                           return (
                             <div key={index} className="relative group">
                               {/* Step circle indicator */}
-                              <div className="absolute -left-6 top-1 w-5 h-5 rounded-full bg-surface border-2 border-primary flex items-center justify-center text-[10px] font-bold text-primary shadow-xs">
+                              <div className="absolute -left-6 top-1 w-5 h-5 rounded-full bg-card border-2 border-primary flex items-center justify-center text-[10px] font-bold text-primary shadow-xs">
                                 {index + 1}
                               </div>
 
-                              <div className="rounded-xl border border-border/80 bg-surface-2/40 p-4 space-y-3">
+                              <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
                                 <div className="flex items-center justify-between flex-wrap gap-2">
                                   <div className="flex items-center gap-2">
-                                    <div className="p-1.5 rounded-lg bg-surface border border-border/60">
+                                    <div className="p-1.5 rounded-lg bg-card border border-border">
                                       {getNodeIcon(step.node)}
                                     </div>
                                     <span className="font-semibold text-sm text-foreground">
@@ -449,7 +449,7 @@ export function TracesView({ initialData }: TracesViewProps) {
                                     )}
                                   </div>
 
-                                  <span className="text-xs font-mono text-muted">
+                                  <span className="text-xs font-mono text-muted-foreground">
                                     {new Date(step.timestamp).toLocaleTimeString()}
                                   </span>
                                 </div>
@@ -472,13 +472,13 @@ export function TracesView({ initialData }: TracesViewProps) {
                                 {/* Tool calls executed */}
                                 {step.toolCalls && step.toolCalls.length > 0 && (
                                   <div className="space-y-2 pt-1">
-                                    <span className="text-[11px] font-semibold uppercase text-muted tracking-wide">
+                                    <span className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wide">
                                       Tools Executed:
                                     </span>
                                     {step.toolCalls.map((tc, tcIdx) => (
                                       <div
                                         key={tcIdx}
-                                        className="rounded-lg border border-border/60 bg-surface p-3 space-y-2 text-xs"
+                                        className="rounded-lg border border-border bg-card p-3 space-y-2 text-xs"
                                       >
                                         <div className="flex items-center gap-2 font-mono text-xs font-semibold text-primary">
                                           <span>→ {tc.name}()</span>
@@ -486,8 +486,8 @@ export function TracesView({ initialData }: TracesViewProps) {
 
                                         {tc.args && Object.keys(tc.args).length > 0 && (
                                           <div>
-                                            <span className="text-[10px] uppercase font-bold text-muted">Arguments:</span>
-                                            <pre className="mt-0.5 p-2 rounded bg-surface-2 font-mono text-[11px] text-foreground overflow-x-auto">
+                                            <span className="text-[10px] uppercase font-bold text-muted-foreground">Arguments:</span>
+                                            <pre className="mt-0.5 p-2 rounded bg-muted/60 font-mono text-[11px] text-foreground overflow-x-auto border border-border/40">
                                               {JSON.stringify(tc.args, null, 2)}
                                             </pre>
                                           </div>
@@ -495,8 +495,8 @@ export function TracesView({ initialData }: TracesViewProps) {
 
                                         {tc.result !== undefined && (
                                           <div>
-                                            <span className="text-[10px] uppercase font-bold text-muted">Return Value:</span>
-                                            <pre className="mt-0.5 p-2 rounded bg-surface-2 font-mono text-[11px] text-foreground overflow-x-auto max-h-40">
+                                            <span className="text-[10px] uppercase font-bold text-muted-foreground">Return Value:</span>
+                                            <pre className="mt-0.5 p-2 rounded bg-muted/60 font-mono text-[11px] text-foreground overflow-x-auto max-h-40 border border-border/40">
                                               {JSON.stringify(tc.result, null, 2)}
                                             </pre>
                                           </div>
@@ -509,8 +509,8 @@ export function TracesView({ initialData }: TracesViewProps) {
                                 {/* Output preview */}
                                 {step.output !== undefined && (
                                   <div className="pt-1">
-                                    <span className="text-[10px] uppercase font-bold text-muted">Node Output:</span>
-                                    <pre className="mt-0.5 p-2 rounded bg-surface font-mono text-[11px] text-foreground overflow-x-auto border border-border/40">
+                                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Node Output:</span>
+                                    <pre className="mt-0.5 p-2 rounded bg-muted/60 font-mono text-[11px] text-foreground overflow-x-auto border border-border/40">
                                       {typeof step.output === "object"
                                         ? JSON.stringify(step.output, null, 2)
                                         : String(step.output)}
@@ -529,11 +529,11 @@ export function TracesView({ initialData }: TracesViewProps) {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-border/80 bg-surface-2/30 flex justify-end">
+            <div className="p-4 border-t border-border bg-muted/30 flex justify-end">
               <button
                 type="button"
                 onClick={() => setSelectedTrace(null)}
-                className="px-4 py-2 rounded-lg text-xs font-medium border border-border bg-surface hover:bg-surface-2 text-foreground transition-colors"
+                className="px-4 py-2 rounded-lg text-xs font-medium border border-border bg-card hover:bg-muted text-foreground transition-colors"
               >
                 Close Inspector
               </button>

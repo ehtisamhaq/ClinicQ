@@ -149,10 +149,10 @@ export function PublicTracker({ token, initialData }: PublicTrackerProps) {
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
       {/* Live status header banner */}
-      <div className="rounded-2xl border border-border/80 bg-surface/90 backdrop-blur-md p-6 shadow-sm">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border/60">
           <div>
-            <span className="text-xs uppercase font-medium tracking-wider text-muted">
+            <span className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
               Live Queue Tracker
             </span>
             <h1 className="text-2xl font-serif font-bold text-foreground mt-0.5">
@@ -161,7 +161,7 @@ export function PublicTracker({ token, initialData }: PublicTrackerProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-xs text-muted font-sans">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground font-sans">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -172,7 +172,7 @@ export function PublicTracker({ token, initialData }: PublicTrackerProps) {
             <button
               onClick={fetchLatest}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border bg-surface-2 hover:bg-surface-3 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border bg-card hover:bg-muted text-foreground transition-colors disabled:opacity-50"
             >
               <IconRefresh className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
               <span>Refresh</span>
@@ -207,7 +207,7 @@ export function PublicTracker({ token, initialData }: PublicTrackerProps) {
                           ? "bg-primary text-primary-foreground shadow-sm"
                           : state === "current"
                           ? "ring-2 ring-primary ring-offset-2 bg-primary/10 text-primary font-bold animate-pulse"
-                          : "bg-surface-2 text-muted"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -218,12 +218,12 @@ export function PublicTracker({ token, initialData }: PublicTrackerProps) {
                           ? "text-primary font-semibold"
                           : state === "completed"
                           ? "text-foreground"
-                          : "text-muted"
+                          : "text-muted-foreground"
                       }`}
                     >
                       {step.label}
                     </span>
-                    <span className="text-[10px] text-muted">Step {idx + 1}</span>
+                    <span className="text-[10px] text-muted-foreground">Step {idx + 1}</span>
                   </div>
                 );
               })}
@@ -242,29 +242,29 @@ export function PublicTracker({ token, initialData }: PublicTrackerProps) {
             <div className="text-4xl font-extrabold font-serif text-primary mt-1">
               #{data.queuePosition ?? 1}
             </div>
-            <span className="text-[11px] text-muted mt-1">in today&apos;s queue</span>
+            <span className="text-[11px] text-muted-foreground mt-1">in today&apos;s queue</span>
           </div>
 
-          <div className="rounded-2xl border border-border/80 bg-surface p-5 text-center flex flex-col justify-center shadow-xs">
-            <span className="text-xs uppercase font-medium tracking-wider text-muted">
+          <div className="rounded-2xl border border-border bg-card p-5 text-center flex flex-col justify-center shadow-xs">
+            <span className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
               Patients Ahead
             </span>
             <div className="text-3xl font-bold font-serif text-foreground mt-1">
               {data.patientsAhead}
             </div>
-            <span className="text-[11px] text-muted mt-1">
+            <span className="text-[11px] text-muted-foreground mt-1">
               {data.patientsAhead === 0 ? "You are next in turn!" : "waiting before you"}
             </span>
           </div>
 
-          <div className="rounded-2xl border border-border/80 bg-surface p-5 text-center flex flex-col justify-center shadow-xs">
-            <span className="text-xs uppercase font-medium tracking-wider text-muted">
+          <div className="rounded-2xl border border-border bg-card p-5 text-center flex flex-col justify-center shadow-xs">
+            <span className="text-xs uppercase font-medium tracking-wider text-muted-foreground">
               Estimated Wait
             </span>
             <div className="text-3xl font-bold font-serif text-foreground mt-1">
               ~{data.estimatedWaitMinutes}m
             </div>
-            <span className="text-[11px] text-muted mt-1">adaptive estimate</span>
+            <span className="text-[11px] text-muted-foreground mt-1">adaptive estimate</span>
           </div>
         </div>
       )}
@@ -285,14 +285,14 @@ export function PublicTracker({ token, initialData }: PublicTrackerProps) {
       )}
 
       {/* Appointment & Doctor details */}
-      <div className="rounded-2xl border border-border/80 bg-surface p-6 shadow-sm space-y-5">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-5">
         <h2 className="text-base font-semibold text-foreground font-serif">
           Appointment Information
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          <div className="p-4 rounded-xl border border-border/60 bg-surface-2/60 space-y-2">
-            <div className="flex items-center gap-2 text-muted text-xs font-medium">
+          <div className="p-4 rounded-xl border border-border/60 bg-muted/30 space-y-2">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
               <IconStethoscope className="h-4 w-4" />
               <span>Assigned Specialist</span>
             </div>
@@ -302,38 +302,38 @@ export function PublicTracker({ token, initialData }: PublicTrackerProps) {
             <div className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary/10 text-primary font-medium">
               {data.doctor.specialty}
             </div>
-            <div className="text-xs text-muted pt-1">
+            <div className="text-xs text-muted-foreground pt-1">
               Consultation Fee: <span className="font-semibold text-foreground">৳{Number(data.doctor.consultationFee)}</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl border border-border/60 bg-surface-2/60 space-y-2">
-            <div className="flex items-center gap-2 text-muted text-xs font-medium">
+          <div className="p-4 rounded-xl border border-border/60 bg-muted/30 space-y-2">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
               <IconClock className="h-4 w-4" />
               <span>Scheduled Slot</span>
             </div>
             <div className="font-medium text-foreground text-base">
               {formattedTime}
             </div>
-            <div className="text-xs text-muted">
+            <div className="text-xs text-muted-foreground">
               {formattedDate}
             </div>
-            <div className="text-xs text-muted pt-1">
+            <div className="text-xs text-muted-foreground pt-1">
               Patient: <span className="font-semibold text-foreground">Initials {data.patientInitials}</span>
             </div>
           </div>
         </div>
 
         {/* Clinic info & instructions */}
-        <div className="rounded-xl border border-border/60 bg-surface-2/40 p-4 space-y-3">
+        <div className="rounded-xl border border-border/60 bg-muted/20 p-4 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
             <IconMapPin className="h-4 w-4 text-primary" />
             <span>Clinic Location & Lobby Instructions</span>
           </div>
-          <p className="text-xs text-muted leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             ClinicQ Medical Complex, Floor 3, Room 302. Please ensure your mobile phone is kept on vibrate and keep this tracker page open on your browser for instant audio/visual turn alerts.
           </p>
-          <div className="flex items-center gap-1.5 text-[11px] text-muted/80 pt-1">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/80 pt-1">
             <IconInfoCircle className="h-3.5 w-3.5" />
             <span>Last synchronized at {lastUpdated.toLocaleTimeString()}</span>
           </div>

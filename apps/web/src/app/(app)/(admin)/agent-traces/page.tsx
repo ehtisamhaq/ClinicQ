@@ -17,7 +17,7 @@ export default function AgentTracesPage() {
         <h1 className="text-2xl sm:text-3xl font-serif font-bold text-foreground mt-1">
           Agent Execution Traces
         </h1>
-        <p className="text-sm text-muted mt-1 max-w-2xl">
+        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           Inspect the end-to-end execution of the AI booking assistant. Review visited graph nodes, tool calls, autonomous constraint replanning, and final booking decisions.
         </p>
       </div>
@@ -45,13 +45,13 @@ function TracesSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="h-24 rounded-xl border border-border bg-surface"></div>
-        <div className="h-24 rounded-xl border border-border bg-surface"></div>
-        <div className="h-24 rounded-xl border border-border bg-surface"></div>
-        <div className="h-24 rounded-xl border border-border bg-surface"></div>
+        <div className="h-24 rounded-xl border border-border bg-card"></div>
+        <div className="h-24 rounded-xl border border-border bg-card"></div>
+        <div className="h-24 rounded-xl border border-border bg-card"></div>
+        <div className="h-24 rounded-xl border border-border bg-card"></div>
       </div>
-      <div className="h-10 rounded-lg border border-border bg-surface max-w-md"></div>
-      <div className="h-96 rounded-2xl border border-border bg-surface"></div>
+      <div className="h-10 rounded-lg border border-border bg-card max-w-md"></div>
+      <div className="h-96 rounded-2xl border border-border bg-card"></div>
     </div>
   );
 }
