@@ -40,3 +40,6 @@ apps/api/prisma/migrations/.DS_Store
 
 # Test coverage
 coverage/
+
+# Antigravity Skills Catalog
+.agents/
