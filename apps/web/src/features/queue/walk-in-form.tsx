@@ -21,7 +21,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { getLocalDateString } from "@/lib/utils";
 import type { DoctorCatalogItem, SlotItem } from "@/lib/catalog/queries";
 import { bookWalkInAction } from "@/lib/queue/actions";
 
@@ -36,10 +36,11 @@ export function WalkInForm({ doctors }: WalkInFormProps) {
   const [patientPhone, setPatientPhone] = React.useState("");
   const [preferredLanguage, setPreferredLanguage] = React.useState<"en" | "bn">("en");
   const [selectedDoctorId, setSelectedDoctorId] = React.useState<string>(doctors[0]?.id || "");
+  const [selectedDate, setSelectedDate] = React.useState<string>(() => getLocalDateString());
   const [reason, setReason] = React.useState("");
   const [autoCheckIn, setAutoCheckIn] = React.useState(true);
 
-  // Slots for the selected doctor today
+  // Slots for the selected doctor on the selected date
   const [slots, setSlots] = React.useState<SlotItem[]>([]);
   const [selectedSlotId, setSelectedSlotId] = React.useState<string>("");
   const [isLoadingSlots, setIsLoadingSlots] = React.useState(false);
@@ -47,7 +48,7 @@ export function WalkInForm({ doctors }: WalkInFormProps) {
   const [isPending, startTransition] = React.useTransition();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
-  // Fetch slots for selected doctor today
+  // Fetch slots for selected doctor and date
   React.useEffect(() => {
     let cancelled = false;
     if (!selectedDoctorId) return;
@@ -56,9 +57,9 @@ export function WalkInForm({ doctors }: WalkInFormProps) {
       setIsLoadingSlots(true);
       setSelectedSlotId("");
 
-      const today = new Date().toISOString().split("T")[0];
-      const startOfDay = new Date(`${today}T00:00:00.000Z`).toISOString();
-      const endOfDay = new Date(`${today}T23:59:59.999Z`).toISOString();
+      const [y, m, d] = selectedDate.split("-").map(Number);
+      const startOfDay = new Date(y!, m! - 1, d!, 0, 0, 0).toISOString();
+      const endOfDay = new Date(y!, m! - 1, d!, 23, 59, 59, 999).toISOString();
       try {
         const res = await fetch(
           getApiUrl(`/slots/doctor/${selectedDoctorId}?from=${startOfDay}&to=${endOfDay}`)
@@ -218,11 +219,20 @@ export function WalkInForm({ doctors }: WalkInFormProps) {
 
           {/* Available Slot Selection */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Today&apos;s Available Slots *</Label>
-              {isLoadingSlots && (
-                <span className="text-[11px] text-muted-foreground animate-pulse">Loading slots...</span>
-              )}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <Label className="text-xs">Available Consultation Slots *</Label>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="date"
+                  value={selectedDate}
+                  min={getLocalDateString()}
+                  onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+                  className="h-7 px-2 rounded-md border border-input bg-transparent text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                {isLoadingSlots && (
+                  <span className="text-[11px] text-muted-foreground animate-pulse">Loading slots...</span>
+                )}
+              </div>
             </div>
 
             {isLoadingSlots ? (
@@ -233,7 +243,7 @@ export function WalkInForm({ doctors }: WalkInFormProps) {
               </div>
             ) : slots.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-                No slots currently available for this doctor today.
+                No slots currently available for this doctor on {selectedDate}. Choose another date or specialist.
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">

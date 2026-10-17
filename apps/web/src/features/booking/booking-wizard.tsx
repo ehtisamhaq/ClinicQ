@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { bookManualAppointmentAction, type BookActionResult } from "@/lib/booking/actions";
 import { joinWaitlistAction } from "@/lib/waitlist/actions";
+import { getLocalDateString } from "@/lib/utils";
 import type { DoctorCatalogItem, SlotItem } from "@/lib/catalog/queries";
 
 export interface BookingWizardProps {
@@ -45,11 +46,7 @@ export function BookingWizard({
 
   // Selection state
   const [selectedDoctor, setSelectedDoctor] = React.useState<DoctorCatalogItem | null>(null);
-  const [selectedDate, setSelectedDate] = React.useState<string>("");
-
-  React.useEffect(() => {
-    setSelectedDate(new Date().toISOString().split("T")[0]);
-  }, []);
+  const [selectedDate, setSelectedDate] = React.useState<string>(() => getLocalDateString());
   const [selectedSlot, setSelectedSlot] = React.useState<SlotItem | null>(null);
   const [reason, setReason] = React.useState<string>("");
 
