@@ -5,6 +5,6 @@ import { QueueController } from "./queue.controller";
 const router: IRouter = Router();
 
 router.get("/doctor/:doctorId", QueueController.getDoctorQueue);
-router.get("/clinic", checkAuth("RECEPTIONIST", "ADMIN"), QueueController.getClinicQueue);
+router.get("/clinic", checkAuth("RECEPTIONIST", "ADMIN", "DOCTOR"), QueueController.getClinicQueue);
 
 export const queueRouter = router;
