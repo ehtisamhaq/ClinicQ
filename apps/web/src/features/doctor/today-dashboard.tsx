@@ -51,15 +51,19 @@ export function TodayDashboard({
     initialQueueDetails
   );
   const [isUpdating, startUpdateTransition] = React.useTransition();
-  const [tab, setTab] = React.useState<"waiting" | "upcoming" | "completed">("waiting");
-
   const [todayString] = React.useState(() => new Date().toISOString().split("T")[0]);
   const [tomorrowString] = React.useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
     return d.toISOString().split("T")[0];
   });
-  const [selectedDate, setSelectedDate] = React.useState<string>(todayString);
+  const [selectedDate, setSelectedDate] = React.useState<string>("ALL");
+  const [tab, setTab] = React.useState<"waiting" | "upcoming" | "completed">(() => {
+    const hasWaiting = initialAppointments.some(
+      (a) => a.status === "CHECKED_IN" || a.status === "IN_CONSULTATION"
+    );
+    return hasWaiting ? "waiting" : "upcoming";
+  });
   const [isRefreshingDate, setIsRefreshingDate] = React.useState(false);
 
   // Re-fetch function on socket update or manual click via authenticated server action
@@ -210,10 +214,21 @@ export function TodayDashboard({
           <div className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
             <button
               type="button"
+              onClick={() => handleDateChange("ALL")}
+              className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                selectedDate === "ALL"
+                  ? "bg-primary text-primary-foreground shadow-xs font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All Upcoming
+            </button>
+            <button
+              type="button"
               onClick={() => handleDateChange(todayString)}
               className={`px-2.5 py-1 rounded-md font-medium transition-all ${
                 selectedDate === todayString
-                  ? "bg-background text-foreground shadow-xs"
+                  ? "bg-background text-foreground shadow-xs font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -224,12 +239,24 @@ export function TodayDashboard({
               onClick={() => handleDateChange(tomorrowString)}
               className={`px-2.5 py-1 rounded-md font-medium transition-all ${
                 selectedDate === tomorrowString
-                  ? "bg-background text-foreground shadow-xs"
+                  ? "bg-background text-foreground shadow-xs font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Tomorrow
             </button>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <input
+              type="date"
+              value={selectedDate === "ALL" ? "" : selectedDate}
+              onChange={(e) => {
+                if (e.target.value) handleDateChange(e.target.value);
+              }}
+              className="h-8 rounded-lg border border-border bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+              title="Pick a specific date"
+            />
           </div>
 
           <Button
@@ -245,12 +272,15 @@ export function TodayDashboard({
         </div>
       </div>
 
-      {/* Today Metrics Strip */}
+      {/* Today Metrics Strip (Clickable to switch tabs) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="border-border/80 shadow-xs">
+        <Card
+          onClick={() => handleDateChange("ALL")}
+          className="border-border/80 shadow-xs cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-all"
+        >
           <CardContent className="p-3.5 space-y-1">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-              {selectedDate === todayString ? "Total Today" : "Total Scheduled"}
+              {selectedDate === "ALL" ? "All Upcoming" : selectedDate === todayString ? "Total Today" : "Scheduled"}
             </span>
             <div className="text-xl font-bold font-heading text-foreground">
               {appointments.length}
@@ -258,7 +288,10 @@ export function TodayDashboard({
           </CardContent>
         </Card>
 
-        <Card className="border-border/80 shadow-xs">
+        <Card
+          onClick={() => setTab("completed")}
+          className="border-border/80 shadow-xs cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all"
+        >
           <CardContent className="p-3.5 space-y-1">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Completed
@@ -269,7 +302,10 @@ export function TodayDashboard({
           </CardContent>
         </Card>
 
-        <Card className="border-border/80 shadow-xs">
+        <Card
+          onClick={() => setTab("waiting")}
+          className="border-border/80 shadow-xs cursor-pointer hover:border-amber-500/50 hover:bg-amber-500/5 transition-all"
+        >
           <CardContent className="p-3.5 space-y-1">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Waiting in Queue
@@ -280,7 +316,10 @@ export function TodayDashboard({
           </CardContent>
         </Card>
 
-        <Card className="border-border/80 shadow-xs">
+        <Card
+          onClick={() => setTab("upcoming")}
+          className="border-border/80 shadow-xs cursor-pointer hover:border-sky-500/50 hover:bg-sky-500/5 transition-all"
+        >
           <CardContent className="p-3.5 space-y-1">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Upcoming Booked
@@ -425,8 +464,35 @@ export function TodayDashboard({
         {tab === "waiting" && (
           <div className="space-y-3">
             {waitingAppointments.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border p-12 text-center text-xs text-muted-foreground">
-                No checked-in patients waiting in the clinic right now.
+              <div className="space-y-4">
+                {upcomingAppointments.length > 0 && (
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+                        <IconClock className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold text-foreground">
+                          {upcomingAppointments.length} Booked Consultation{upcomingAppointments.length > 1 ? "s" : ""} Scheduled
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Patients are booked for consultations. Once they check in at reception they will move to this waiting list, or you can admit them directly.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => setTab("upcoming")}
+                      className="text-xs font-semibold shrink-0 gap-1.5"
+                    >
+                      View Upcoming Bookings ({upcomingAppointments.length})
+                    </Button>
+                  </div>
+                )}
+
+                <div className="rounded-xl border border-dashed border-border p-12 text-center text-xs text-muted-foreground">
+                  No checked-in patients waiting in the clinic right now.
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -502,27 +568,49 @@ export function TodayDashboard({
           <div className="space-y-3">
             {upcomingAppointments.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-12 text-center text-xs text-muted-foreground">
-                No further booked appointments scheduled for today.
+                No further booked appointments scheduled.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {upcomingAppointments.map((apt) => {
-                  const time = new Date(apt.slot.startsAt).toLocaleTimeString([], {
-                    hour: "2-digit",
+                  const aptDate = new Date(apt.slot.startsAt);
+                  const now = new Date();
+                  const isToday = aptDate.toDateString() === now.toDateString();
+                  const tmrw = new Date();
+                  tmrw.setDate(tmrw.getDate() + 1);
+                  const isTomorrow = aptDate.toDateString() === tmrw.toDateString();
+                  const dateLabel = isToday
+                    ? "Today"
+                    : isTomorrow
+                    ? "Tomorrow"
+                    : aptDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+
+                  const time = aptDate.toLocaleTimeString([], {
+                    hour: "numeric",
                     minute: "2-digit",
+                    hour12: true,
                   });
 
                   return (
-                    <Card key={apt.id} className="border-border/80 shadow-xs">
+                    <Card key={apt.id} className="border-border/80 shadow-xs hover:border-primary/40 transition-all">
                       <CardHeader className="p-4 pb-2">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <div className="font-semibold text-xs text-foreground">
-                              {apt.patient.user.email.split("@")[0]}
+                            <div className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                              <span>Patient {apt.patient.user.email.split("@")[0]}</span>
+                              {apt.assistantSummary && (
+                                <IconRobot className="h-3.5 w-3.5 text-primary" title="AI Assisted Booking" />
+                              )}
                             </div>
-                            <div className="text-[11px] text-muted-foreground flex items-center gap-1">
-                              <IconClock className="h-3 w-3" />
-                              Scheduled: {time}
+                            <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-1 flex-wrap">
+                              <span className="font-semibold text-primary px-1.5 py-0.5 rounded bg-primary/10 text-[10px]">
+                                {dateLabel}
+                              </span>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <IconClock className="h-3 w-3" />
+                                {time}
+                              </span>
                             </div>
                           </div>
                           {renderUrgencyBadge(apt.urgency)}
@@ -531,29 +619,56 @@ export function TodayDashboard({
 
                       <CardContent className="p-4 pt-1 space-y-2">
                         <div className="rounded-md bg-muted/40 p-2 text-xs text-foreground">
+                          <span className="font-semibold text-[10px] text-muted-foreground uppercase block mb-0.5">
+                            Reason for Visit:
+                          </span>
                           {apt.reason}
                         </div>
+
+                        {apt.assistantSummary && (
+                          <div className="rounded-md bg-primary/5 p-2 text-[11px] text-muted-foreground italic flex items-center gap-1">
+                            <span className="font-semibold text-primary not-italic text-[10px]">AI Summary:</span>
+                            {apt.assistantSummary}
+                          </div>
+                        )}
                       </CardContent>
 
-                      <CardFooter className="p-4 pt-0 flex items-center justify-between">
+                      <CardFooter className="p-4 pt-0 flex items-center justify-between gap-2">
                         <Badge variant="outline" className="text-[10px]">
-                          Awaiting Check-in
+                          Booked Online
                         </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            handleTransitionStatus(
-                              apt.id,
-                              "NO_SHOW",
-                              `Marked ${apt.patient.user.email.split("@")[0]} as No-Show.`
-                            )
-                          }
-                          disabled={isUpdating}
-                          className="h-7 text-xs px-2 text-destructive hover:bg-destructive/10"
-                        >
-                          Mark No-Show
-                        </Button>
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleTransitionStatus(
+                                apt.id,
+                                "NO_SHOW",
+                                `Marked ${apt.patient.user.email.split("@")[0]} as No-Show.`
+                              )
+                            }
+                            disabled={isUpdating}
+                            className="h-7 text-xs px-2 text-destructive hover:bg-destructive/10"
+                          >
+                            No-Show
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              handleTransitionStatus(
+                                apt.id,
+                                "IN_CONSULTATION",
+                                `Admitted patient ${apt.patient.user.email.split("@")[0]} directly to consultation room!`
+                              )
+                            }
+                            disabled={isUpdating}
+                            className="h-7 text-xs px-2.5 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-xs"
+                          >
+                            <IconPlayerPlay className="h-3 w-3" />
+                            Admit to Room
+                          </Button>
+                        </div>
                       </CardFooter>
                     </Card>
                   );

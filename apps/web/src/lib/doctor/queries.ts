@@ -36,24 +36,40 @@ export async function getDoctorTodayAppointments(
   date?: string
 ): Promise<AppointmentItem[]> {
   try {
-    const baseDate = date ? new Date(date) : new Date();
-    const from = new Date(
-      baseDate.getFullYear(),
-      baseDate.getMonth(),
-      baseDate.getDate(),
-      0,
-      0,
-      0
-    ).toISOString();
-    const to = new Date(
-      baseDate.getFullYear(),
-      baseDate.getMonth(),
-      baseDate.getDate(),
-      23,
-      59,
-      59,
-      999
-    ).toISOString();
+    let from: string | undefined;
+    let to: string | undefined;
+
+    if (date === "ALL") {
+      const now = new Date();
+      from = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0
+      ).toISOString();
+      to = undefined;
+    } else {
+      const baseDate = date ? new Date(date) : new Date();
+      from = new Date(
+        baseDate.getFullYear(),
+        baseDate.getMonth(),
+        baseDate.getDate(),
+        0,
+        0,
+        0
+      ).toISOString();
+      to = new Date(
+        baseDate.getFullYear(),
+        baseDate.getMonth(),
+        baseDate.getDate(),
+        23,
+        59,
+        59,
+        999
+      ).toISOString();
+    }
 
     const res = await apiClient.get<AppointmentItem[]>("/appointments", {
       auth: "session",

@@ -48,7 +48,7 @@ async function TodayContent() {
   }
 
   const [appointments, queueDetails] = await Promise.all([
-    getDoctorTodayAppointments(doctor.id),
+    getDoctorTodayAppointments(doctor.id, "ALL"),
     getDoctorLiveQueue(doctor.id),
   ]);
 
