@@ -2,28 +2,19 @@
 FROM oven/bun:1.2.4-alpine AS base
 WORKDIR /app
 
-# Install dependencies into temp directory to cache them
-FROM base AS install
-RUN mkdir -p /temp/prod
-COPY package.json bun.lock /temp/prod/
-COPY apps/api/package.json /temp/prod/apps/api/
-RUN cd /temp/prod && bun install --frozen-lockfile --production
+# Install dependencies
+COPY package.json ./
+RUN bun install
 
-# Build stage
-FROM base AS prerelease
-COPY --from=install /temp/prod/node_modules node_modules
+# Copy application source code and prisma schema
 COPY . .
-RUN cd apps/api && bunx prisma generate
-RUN cd apps/api && bun run build
 
-# Production release
-FROM oven/bun:1.2.4-alpine AS release
-WORKDIR /app
+# Generate Prisma client and build server bundle
+RUN bunx prisma generate
+RUN bun run build
 
-COPY --from=prerelease /app/apps/api/dist/server.js ./server.js
-COPY --from=prerelease /app/apps/api/prisma ./prisma
-COPY --from=prerelease /app/node_modules ./node_modules
-
-EXPOSE 4000
+EXPOSE 10000
 ENV NODE_ENV=production
-CMD ["bun", "run", "server.js"]
+ENV PORT=10000
+
+CMD ["bun", "run", "dist/server.js"]
